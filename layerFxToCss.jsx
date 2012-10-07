@@ -247,7 +247,7 @@ var renderCss = function(){
 generateCss(); //get css object filled
 
 var result = renderCss();
-$.writeln(result); //render css object to string
+//$.writeln(result); //render css object to string
 copyToClipboard(result);
 
 /*===============================================================UI=======================================================*/
