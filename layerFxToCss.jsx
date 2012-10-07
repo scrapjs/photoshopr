@@ -1,12 +1,12 @@
 ﻿//TODO: bind to click on layer
 //TODO: make site description & donate
 
-$.writeln("\n=============================");
+//$.writeln("\n=============================");
 //Settings of script
 var settings = {
     showPrefixes : false,
     colorFormat : 'rgb', //rgb, hsl, hex
-    wrapLines: true,
+    wrapLines: false    ,
     comments: false,
     showStrokeAs: 'box-shadow' //'border', 'outline'
 }
@@ -232,19 +232,13 @@ var renderCss = function(){
      } 
     cssStr += 'box-shadow:' + delim + boxShadow;
     
-    //Background
-    var boxShadow = "";
-    if (css['inner-shadow']) boxShadow += css['inner-shadow'] + (c?' /*inner-shadow*/':'') + ',' + delim;
-    if (css['inner-glow']) boxShadow += css['inner-glow'] + (c?' /*inner-glow*/':'') + ',' + delim;
-    if (css['outer-glow'])boxShadow += css['outer-glow'] + (c?' /*outer-glow*/':'') + ',' + delim;
-    if (css['drop-shadow'])boxShadow += css['drop-shadow'] + (c?' /*drop-shadow*/':'') + ',' + delim;
-    boxShadow = boxShadow.substr (0, boxShadow.length-2) + ';\n';
-     if (settings.showPrefixes){
-         for (var i = prefixes.length; i--;){
-            cssStr += prefixes[i] + 'box-shadow:' + delim + boxShadow;
-         }
-     } 
-    cssStr += 'box-shadow:' + delim + boxShadow;
+        //TODO: Stroke
+        
+        //TODO: bevel & emboss
+    
+    //TODO:Background
+    
+    
     
     return cssStr;
 }
@@ -255,8 +249,6 @@ generateCss(); //get css object filled
 var result = renderCss();
 $.writeln(result); //render css object to string
 copyToClipboard(result);
-
-$.writeln("Event"+s2t('eventCopyEffects'))
 
 /*===============================================================UI=======================================================*/
 function copyToClipboard(text){
