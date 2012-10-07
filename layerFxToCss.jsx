@@ -4,13 +4,18 @@
 $.writeln("\n=============================");
 //Settings of script
 var settings = {
-    showPrefixes : true,
-    colorFormat : 'rgb' //rgb, hsl, hex
+    showPrefixes : false,
+    colorFormat : 'rgb', //rgb, hsl, hex
+    wrapLines: true,
+    comments: false
 }
 var prefixes = ['-webkit-','-moz-','-ms-','-o-'];
 var css = {
-    "box-shadow": [], //array of values, will be joined with ','    
-}; //resulting object of css style
+    'drop-shadow':'',
+    'inner-shadow':'',
+    'outer-glow':'',
+    'inner-glow':''
+}; //resulting object of converted to CSS photoshop layer fx's
 
 //Get fx of active layer
 function getActiveLayerProperty( psKey, psType ) {
@@ -62,7 +67,7 @@ var generateCss = function(){
             
             var fxprop = getEffect(key);
             if (!fxprop) continue; //if not fx
-            
+            $.writeln(t2s(key));
             proccess[t2s(key)] ? proccess[t2s(key)](fxprop) : "";        
     }
     return "";
@@ -74,30 +79,78 @@ var proccess = {
     "dropShadow" : function(fxProp){
         var styleValue = "", //resulting style
         enabled = fxProp.getBoolean(s2t("enabled")), 
-        mode, 
+        mode, //TODO: take into account
         color = fxProp.getObjectValue(s2t("color")), 
         opacity = fxProp.getUnitDoubleValue(s2t("opacity")), 
         useGlobalAngle = fxProp.getBoolean(s2t("useGlobalAngle")), 
         angle = fxProp.getUnitDoubleValue(s2t("localLightingAngle")),
         distance = fxProp.getUnitDoubleValue(s2t("distance")), 
         spread = fxProp.getUnitDoubleValue(s2t("chokeMatte")), 
-        blur = fxProp.getUnitDoubleValue(s2t("blur"));
-        
+        blur = fxProp.getUnitDoubleValue(s2t("blur"));        
         //TODO: make analysis of gradient fill layer, pattern fill layer & solid color fill layer instead returning
-        if (!enabled) return
-        
+        if (!enabled) return;        
+        //get global light angle
+        if (useGlobalAngle) {
+            var ref = new ActionReference();
+            ref.putEnumerated( charIDToTypeID("Lyr "), charIDToTypeID("Ordn"), charIDToTypeID("Trgt") ); 
+            angle = executeActionGet(ref).getInteger(stringIDToTypeID('globalAngle'));
+        }        
+        //showProperties(fxProp);        
+        styleValue += getX(angle, distance)+"px " + getY(angle, distance) + "px " + getBlurStroke (blur, spread) + getColor(color, opacity);        
+        css['drop-shadow'] = styleValue;//do css object        
+        return styleValue;
+    },
+
+    "outerGlow" : function(fxProp){//TODO: take into account all glowing options
+        var styleValue = "", //resulting style
+        enabled = fxProp.getBoolean(s2t("enabled")), 
+        mode, //TODO: take into account
+        color = fxProp.getObjectValue(s2t("color")), 
+        opacity = fxProp.getUnitDoubleValue(s2t("opacity")), 
+        spread = fxProp.getUnitDoubleValue(s2t("chokeMatte")), 
+        blur = fxProp.getUnitDoubleValue(s2t("blur"));
+        if (!enabled) return;        
+        //showProperties(fxProp);        
+        styleValue += "0 0 " + getBlurStroke (blur, spread) + getColor(color, opacity);        
+        css['outer-glow'] = styleValue;//do css object        
+        return styleValue;
+    },
+
+    "innerShadow" : function(fxProp){
+        var styleValue = "", 
+        enabled = fxProp.getBoolean(s2t("enabled")), 
+        mode, //TODO: take into account
+        color = fxProp.getObjectValue(s2t("color")), 
+        opacity = fxProp.getUnitDoubleValue(s2t("opacity")), 
+        spread = fxProp.getUnitDoubleValue(s2t("chokeMatte")), 
+        blur = fxProp.getUnitDoubleValue(s2t("blur")),
+        useGlobalAngle = fxProp.getBoolean(s2t("useGlobalAngle")), 
+        angle = fxProp.getUnitDoubleValue(s2t("localLightingAngle")),
+        distance = fxProp.getUnitDoubleValue(s2t("distance"));        
+        if (!enabled) return;    
         //get global light angle
         if (useGlobalAngle) {
             var ref = new ActionReference();
             ref.putEnumerated( charIDToTypeID("Lyr "), charIDToTypeID("Ordn"), charIDToTypeID("Trgt") ); 
             angle = executeActionGet(ref).getInteger(stringIDToTypeID('globalAngle'));
         }
-        
-        //showProperties(fxProp);
-        
-        styleValue += getXYDistances(angle, distance) + getBlurStroke (blur, spread) + getColor(color, opacity);
-        
-        css['box-shadow'].push(styleValue);//do css object        
+        styleValue += "inset " + getX(angle, distance)+"px " + (getY(angle, distance)) + "px " + getBlurStroke (blur, spread) + getColor(color, opacity);
+        css['inner-shadow'] = styleValue;//do css object        
+        return styleValue;
+    },
+
+    "innerGlow" : function(fxProp){//TODO: take into account all glowing options
+        var styleValue = "", //resulting style
+        enabled = fxProp.getBoolean(s2t("enabled")), 
+        mode, //TODO: take into account
+        color = fxProp.getObjectValue(s2t("color")), 
+        opacity = fxProp.getUnitDoubleValue(s2t("opacity")), 
+        spread = fxProp.getUnitDoubleValue(s2t("chokeMatte")), 
+        blur = fxProp.getUnitDoubleValue(s2t("blur"));
+        if (!enabled) return;        
+        //showProperties(fxProp);        
+        styleValue += "inset 0 0 " + getBlurStroke (blur, spread) + getColor(color, opacity);        
+        css['inner-glow'] = styleValue;//do css object        
         return styleValue;
     }
 }
@@ -146,29 +199,38 @@ var getBlurStroke = function(blur, spread){
     return cssBlur + stroke;
 }
 
-//Returns css x & y in pixels instead of photoshop angle & distance
-var getXYDistances = function(angle, distance){
-    var x, y;
-    $.writeln(angle);
-    $.writeln(distance);
-    x = Math.round(distance * -Math.cos(angle/180*Math.PI)) + "px ";
-    y = Math.round(distance * Math.sin(angle/180*Math.PI)) + "px ";
-    $.writeln(Math.cos(angle/180*Math.PI))
-    return x + y;
+//Returns css x in pixels 
+var getX = function(angle, distance){
+    return Math.round(distance * -Math.cos(angle/180*Math.PI));
 }
+
+
+//Returns y css  in pixels
+var getY = function(angle, distance){
+    return Math.round(distance * Math.sin(angle/180*Math.PI));
+}
+
 
 //Returns string from css object
 var renderCss = function(){
     $.writeln("-------------------")
-    var cssStr = "";
+    var cssStr = "";    
+    var delim = (settings.wrapLines ? "\n" : " " ),
+    c = settings.comments;
     
-    var boxShadow = css['box-shadow'].join(', ') + ";\n";
+    //Box-shadows
+    var boxShadow = "";
+    if (css['inner-shadow']) boxShadow += css['inner-shadow'] + (c?' /*inner-shadow*/':'') + ',' + delim;
+    if (css['inner-glow']) boxShadow += css['inner-glow'] + (c?' /*inner-glow*/':'') + ',' + delim;
+    if (css['outer-glow'])boxShadow += css['outer-glow'] + (c?' /*outer-glow*/':'') + ',' + delim;
+    if (css['drop-shadow'])boxShadow += css['drop-shadow'] + (c?' /*drop-shadow*/':'') + ',' + delim;
+    boxShadow = boxShadow.substr (0, boxShadow.length-2) + ';\n';
      if (settings.showPrefixes){
          for (var i = prefixes.length; i--;){
-            cssStr += prefixes[i] + 'box-shadow: ' + boxShadow;
+            cssStr += prefixes[i] + 'box-shadow:' + delim + boxShadow;
          }
      } 
-    cssStr += 'box-shadow: ' + boxShadow;
+    cssStr += 'box-shadow:' + delim + boxShadow;
     
     return cssStr;
 }

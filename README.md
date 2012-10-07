@@ -1,4 +1,4 @@
-Photoshop script that generates CSS style based on active layer effects.
+Photoshop script that generates CSS based on Fx of active layer
 ============================================================
 <h2>Features</h2>
 <ul>
@@ -6,6 +6,7 @@ Photoshop script that generates CSS style based on active layer effects.
 	<li>Vendor prefixes</li>
 	<li>"Copy layer style" places CSS to clipboard</li>
 	<li>Color formats: rgb, hsl, hex</li>
+	<li>Detect round corners</li>
 </ul>
 
 <h2>Usage</h2>
