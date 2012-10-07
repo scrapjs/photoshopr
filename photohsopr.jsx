@@ -1,5 +1,6 @@
 ﻿//Settings & appending notifiers
 app.notifiersEnabled = true
+notifiers.removeAll();
 var eventFile = new File(app.path +"/Presets/Scripts/layerFxToCss.jsx");
 app.notifiers.add("CpFX", eventFile);
 
