@@ -7,7 +7,8 @@ var settings = {
     showPrefixes : false,
     colorFormat : 'rgb', //rgb, hsl, hex
     wrapLines: true,
-    comments: false
+    comments: false,
+    showStrokeAs: 'box-shadow' //'border', 'outline'
 }
 var prefixes = ['-webkit-','-moz-','-ms-','-o-'];
 var css = {
@@ -16,6 +17,7 @@ var css = {
     'outer-glow':'',
     'inner-glow':''
 }; //resulting object of converted to CSS photoshop layer fx's
+var s2t =stringIDToTypeID, t2s = typeIDToStringID, t2c = typeIDToCharID, c2t = charIDToTypeID;
 
 //Get fx of active layer
 function getActiveLayerProperty( psKey, psType ) {
@@ -34,7 +36,6 @@ function getActiveLayerProperty( psKey, psType ) {
 //Necessary vars
 layerEffects = getActiveLayerProperty( charIDToTypeID( 'Lefx' ) );
 fx = layerEffects;
-var s2t =stringIDToTypeID, t2s = typeIDToStringID, t2c = typeIDToCharID, c2t = charIDToTypeID;
 
 
 //Debug function - logs to console all properties & their types of @param actionDescriptor
@@ -67,7 +68,7 @@ var generateCss = function(){
             
             var fxprop = getEffect(key);
             if (!fxprop) continue; //if not fx
-            $.writeln(t2s(key));
+            
             proccess[t2s(key)] ? proccess[t2s(key)](fxprop) : "";        
     }
     return "";
@@ -213,12 +214,25 @@ var getY = function(angle, distance){
 
 //Returns string from css object
 var renderCss = function(){
-    $.writeln("-------------------")
     var cssStr = "";    
     var delim = (settings.wrapLines ? "\n" : " " ),
     c = settings.comments;
     
-    //Box-shadows
+    //Box-shadow
+    var boxShadow = "";
+    if (css['inner-shadow']) boxShadow += css['inner-shadow'] + (c?' /*inner-shadow*/':'') + ',' + delim;
+    if (css['inner-glow']) boxShadow += css['inner-glow'] + (c?' /*inner-glow*/':'') + ',' + delim;
+    if (css['outer-glow'])boxShadow += css['outer-glow'] + (c?' /*outer-glow*/':'') + ',' + delim;
+    if (css['drop-shadow'])boxShadow += css['drop-shadow'] + (c?' /*drop-shadow*/':'') + ',' + delim;
+    boxShadow = boxShadow.substr (0, boxShadow.length-2) + ';\n';
+     if (settings.showPrefixes){
+         for (var i = prefixes.length; i--;){
+            cssStr += prefixes[i] + 'box-shadow:' + delim + boxShadow;
+         }
+     } 
+    cssStr += 'box-shadow:' + delim + boxShadow;
+    
+    //Background
     var boxShadow = "";
     if (css['inner-shadow']) boxShadow += css['inner-shadow'] + (c?' /*inner-shadow*/':'') + ',' + delim;
     if (css['inner-glow']) boxShadow += css['inner-glow'] + (c?' /*inner-glow*/':'') + ',' + delim;
@@ -237,4 +251,40 @@ var renderCss = function(){
 
 //Start is here
 generateCss(); //get css object filled
-renderCss(); //render css object to string
+
+var result = renderCss();
+$.writeln(result); //render css object to string
+copyToClipboard(result);
+
+$.writeln("Event"+s2t('eventCopyEffects'))
+
+/*===============================================================UI=======================================================*/
+function copyToClipboard(text){
+    /* Clippy.exe method. A big cons - launches the console.*/
+    var folderForTempFiles = Folder.temp.fsName;
+    // create a new textfile and put the text into it
+    var clipTxtFile =new File(folderForTempFiles + "/ClipBoard.txt"); 
+    clipTxtFile.open('w'); 
+    clipTxtFile.write(text); 
+    clipTxtFile.close();
+
+    // use the clip.exe to copy the contents of the textfile to the windows clipboard
+    var clipBatFile =new File(folderForTempFiles + "/ClipBoard.bat"); 
+    clipBatFile.open('w'); 
+    clipBatFile.writeln("cat \"" + folderForTempFiles + "/ClipBoard.txt\"|clip"); 
+    clipBatFile.close(); 
+    clipBatFile.execute();
+
+    /*TODO: Text layer mathod. Is a way better.*/
+    //var textLayer = new ArtLayer();
+
+    //var newLayer = activeDocument.artLayers.add(); // Create a new ArtLayer object
+    //newLayer.name = "My Layer"; // name it for later reference
+    //var layerRef = activeDocument.artLayers.getByName("My Layer");
+    //$.writeln(doc.selection)
+
+    //activeDocument.activeLayer.copy();
+
+    //doc.selection.selectAll();
+    //docRef.selection.copy(true)
+};
