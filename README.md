@@ -11,6 +11,7 @@ Photoshop script that generates CSS3 rules based on effects of active layer
 	<li>[pending] Texture overlay as data-URI;</li>
 	<li>[pending] Detection of round corners;</li>
 	<li>[pending] Correct sizing of element;</li>
+	<li>[pending] Text-shadow & text layers at all;</li>
 </ul>
 
 <h2>Usage</h2>

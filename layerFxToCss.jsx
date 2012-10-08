@@ -1,14 +1,15 @@
-﻿//TODO: bind to click on layer
+﻿//TODO: bind to click on copy-layer-style
 //TODO: make site description & donate
+//TODO: define text layers & text-shadow
 
-//$.writeln("\n=============================");
+$.writeln("\n=============================");
 //Settings of script
 var settings = {
     showPrefixes : false,
     colorFormat : 'rgb', //rgb, hsl, hex
     wrapLines: false    ,
     comments: false,
-    showStrokeAs: 'box-shadow' //'border', 'outline'
+    strokeType: 'box-shadow' //'box-shadow', 'border', 'outline'
 }
 var prefixes = ['-webkit-','-moz-','-ms-','-o-'];
 var css = {
@@ -68,7 +69,7 @@ var generateCss = function(){
             
             var fxprop = getEffect(key);
             if (!fxprop) continue; //if not fx
-            
+            $.writeln(t2s(key))
             proccess[t2s(key)] ? proccess[t2s(key)](fxprop) : "";        
     }
     return "";
@@ -153,6 +154,43 @@ var proccess = {
         styleValue += "inset 0 0 " + getBlurStroke (blur, spread) + getColor(color, opacity);        
         css['inner-glow'] = styleValue;//do css object        
         return styleValue;
+    },
+    
+    //Stroke
+    "frameFX": function(fxProp){
+        //TODO: make border colouring by gradient
+        try {
+        var styleValue = "", //resulting style
+        enabled = fxProp.getBoolean(s2t("enabled")), 
+        mode, //TODO: take into account
+        color = fxProp.getObjectValue(s2t("color")), 
+        opacity = fxProp.getUnitDoubleValue(s2t("opacity")), 
+        size = fxProp.getUnitDoubleValue(s2t("size")),
+        position = fxProp.getEnumerationValue(s2t("style"));
+        if (!enabled) return;        
+        //showProperties(fxProp);        
+        switch (settings.strokeType){
+            case "box-shadow":
+                switch (t2s(position)){
+                    case "outsetFrame":
+                        styleValue += "0 0 0 " + size + "px " + getColor(color, opacity);
+                        break;
+                    case "insetFrame":
+                        styleValue += "inset 0 0 0 " + size + "px " + getColor(color, opacity);
+                        break;
+                    case "centeredFrame":
+                        styleValue += "inset 0 0 0 " + (size*.5) + "px " + getColor(color, opacity) + 
+                        ", 0 0 0 " + (size*.5) + "px " + getColor(color, opacity);
+                        break;
+                }
+                css['box-shadow-stroke'] = styleValue;//do css object        
+                break;
+            default:
+                styleValue += size + "px solid " + getColor(color, opacity);
+                css['border-stroke'] = styleValue;//do css object        
+        }        
+        return styleValue;
+        } catch (err) {$.writeln(err)}
     }
 }
 
@@ -220,6 +258,7 @@ var renderCss = function(){
     
     //Box-shadow
     var boxShadow = "";
+    if (css['box-shadow-stroke']) boxShadow += css['box-shadow-stroke'] + (c?' /*stroke*/':'') + ',' + delim;
     if (css['inner-shadow']) boxShadow += css['inner-shadow'] + (c?' /*inner-shadow*/':'') + ',' + delim;
     if (css['inner-glow']) boxShadow += css['inner-glow'] + (c?' /*inner-glow*/':'') + ',' + delim;
     if (css['outer-glow'])boxShadow += css['outer-glow'] + (c?' /*outer-glow*/':'') + ',' + delim;
@@ -232,9 +271,10 @@ var renderCss = function(){
      } 
     cssStr += 'box-shadow:' + delim + boxShadow;
     
-        //TODO: Stroke
+    //Border Stroke
+    if (css['border-stroke']) cssStr += 'border:' + delim+css['border-stroke'] + (c?' /*stroke*/':'') + ';\n'
         
-        //TODO: bevel & emboss
+    //TODO: bevel & emboss
     
     //TODO:Background
     
@@ -247,8 +287,8 @@ var renderCss = function(){
 generateCss(); //get css object filled
 
 var result = renderCss();
-//$.writeln(result); //render css object to string
-copyToClipboard(result);
+$.writeln(result); //render css object to string
+//copyToClipboard(result);
 
 /*===============================================================UI=======================================================*/
 function copyToClipboard(text){
