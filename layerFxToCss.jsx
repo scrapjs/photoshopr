@@ -9,14 +9,17 @@
 //TODO: PRIORITY: do interface;
 
 //TODO: make 2 & more layers combining effects
+    
+//TODO: bevel & emboss
 
+$.writeln("\n=============================");
 
 //Settings of script
 var settings = {
     showPrefixes : false,
     colorFormat : 'rgb', //rgb, hsl, hex
     wrapLines: false    ,
-    comments: false,
+    comments: true,
     strokeType: 'box-shadow', //'box-shadow', 'border', 'outline'
     makeTextProperties: true,
     showConfirms: false //confirmation dialogs on copying 
@@ -35,25 +38,6 @@ var css = {
 }, //resulting object of converted to CSS photoshop layer fx's
 delim = (settings.wrapLines ? "\n" : " " );
 var s2t =stringIDToTypeID, t2s = typeIDToStringID, t2c = typeIDToCharID, c2t = charIDToTypeID;
-
-//Get fx of active layer
-function getActiveLayerProperty( psKey, psType ) {
-      var ref;
-      ref = new ActionReference();
-      ref.putProperty( charIDToTypeID( 'Prpr' ), psKey );
-      ref.putEnumerated( charIDToTypeID('Lyr '), charIDToTypeID('Ordn'), charIDToTypeID('Trgt') );
-      if( undefined == psType ){
-          return executeActionGet( ref ).getObjectValue( psKey );
-    }else{
-        return executeActionGet( ref );
-    }
-};
-
-
-//Necessary vars
-layerEffects = getActiveLayerProperty( charIDToTypeID( 'Lefx' ) );
-fx = layerEffects;
-
 
 //Debug functions - logs to console all properties & their types of @param actionDescriptor
 var showObject = function(actionDescriptor){
@@ -79,29 +63,48 @@ var showList = function(list){
 }
 
 
-//key is a typeID of fx property. Returns fx ActionDescriptor
-var getEffect = function(key){
-        var prop;//fx property ActionDescriptor object
-        
-        switch(fx.getType(key)){
-            case DescValueType.OBJECTTYPE: //Show action descriptors
-                prop = fx.getObjectValue(key);
-                break;
-        };        
-        return prop;        
-}
+//Get any property of active layer, in common case
+function getActiveLayerProperty( psKey, psType ) {
+      var ref;
+      ref = new ActionReference();
+      ref.putProperty( c2t( 'Prpr' ), psKey );
+      ref.putEnumerated( c2t('Lyr '), c2t('Ordn'), c2t('Trgt') );      
+      if( undefined == psType ){
+          return executeActionGet( ref ).getObjectValue( psKey );
+    }else{
+        return executeActionGet( ref );
+    }
+};
 
+
+//Necessary vars
+layerFX = getActiveLayerProperty( c2t( 'Lefx' ) );
+//var ref = new ActionReference();
+//ref.putProperty( c2t( 'Prpr' ), c2t() );
+//ref.putEnumerated( c2t('Lyr '), c2t('Ordn'), c2t('Trgt') );      
+//showObject(executeActionGet(ref));
+var layer = app.activeDocument.activeLayer,
+lKind = layer.kind,
+lOpacity,
+lFill,
+lMode,
+lVisible,
+lText,
+lShape;
 
 //Start calculating fx. Fills css object.
 var generateCss = function(){
     var cssStr = "";
-    for (var i = fx.count; i--;){
-            var key = fx.getKey(i);
-            
-            var fxprop = getEffect(key);
-            if (!fxprop) continue; //if not fx
-            $.writeln(t2s(key))
-            proccess[t2s(key)] ? proccess[t2s(key)](fxprop) : "";        
+    //through all layer fx properties
+    for (var i = layerFX.count; i--;){
+            var key = layerFX.getKey(i), fxprop;            
+            try {
+                var fxprop = layerFX.getObjectValue(key);
+                $.writeln(t2s(key));
+                proccess[t2s(key)] ? proccess[t2s(key)](fxprop) : "";            
+            } catch (err) {
+                //$.writeln("I can't get layer fx. I'm sorry.");
+            }       
     }
     return "";
 }
@@ -133,7 +136,8 @@ var proccess = {
         }        
         //showProperties(fxProp);        
         styleValue += getX(angle, distance)+"px " + getY(angle, distance) + "px " + getBlurStroke (blur, spread) + getColor(color, opacity);        
-        css['drop-shadow'] = styleValue;//do css object        
+        css['drop-shadow'] = styleValue;//do css object      
+        css['text-drop-shadow'] = getX(angle, distance)+"px " + getY(angle, distance) + "px " + getBlurOnly (blur, spread) + getColor(color, opacity);//do css object      
         return styleValue;
     },
 
@@ -150,7 +154,8 @@ var proccess = {
             if (settings.showConfirms && !confirm("Outer Glow is in "+t2s(mode)+" mode. Now supported only normal mode. Copy as normal?")) return "";            
         }       
         styleValue += "0 0 " + getBlurStroke (blur, spread) + getColor(color, opacity);        
-        css['outer-glow'] = styleValue;//do css object        
+        css['outer-glow'] = styleValue;//do css object
+        css['text-outer-glow'] = "0 0 " + getBlurOnly (blur, spread) + getColor(color, opacity); ;
         return styleValue;
     },
 
@@ -484,6 +489,16 @@ var getBlurStroke = function(blur, spread){
     return cssBlur + stroke;
 }
 
+//Returns css blur w/o stroke. Blur is calculated to overlap 
+var getBlurOnly = function(blur, spread){
+    var stroke = spread*0.01*blur;
+    var cssBlur = blur + stroke*.5;
+    cssBlur = cssBlur ? (cssBlur.toFixed(0) + "px ") : "0 ";
+    return cssBlur;
+}
+
+
+
 //Returns css x in pixels 
 var getX = function(angle, distance){
     return Math.round(distance * -Math.cos(angle/180*Math.PI));
@@ -496,53 +511,88 @@ var getY = function(angle, distance){
 }
 
 
+
+
+/*===========================================================Rendering===============================================*/
 //Returns string from css object
-var renderCss = function(){
+var renderCss = function(layer){
     var cssStr = "";    
-    c = settings.comments;
+    c = settings.comments;    
     
+    //Box-shadow or text-shadow
+    switch (layer.kind) {
+        case LayerKind.GRADIENTFILL: //This couple has a different background-fill strategy;
+        case LayerKind.SOLIDFILL:
+        case LayerKind.NORMAL: //This layers renders with data-URI in background;
+        case LayerKind.PATTERNFILL:
+            cssStr += renderFillLayer(css);
+            break;
+        case LayerKind.TEXT: //Text effects rendered as a text-shadow instead of box-shadow;
+            cssStr += renderTextLayer(css);
+            break;
+    }    
+    return cssStr;
+}
+
+
+//render for the text layer
+function renderTextLayer(css){
+    //Text-shadow
+    var textShadow = "";
+    if (css['text-outer-glow']) textShadow += css['text-outer-glow'] + (c?' /*outer-glow*/':'') + ',' + delim;
+    if (css['text-drop-shadow']) textShadow += css['text-drop-shadow'] + (c?' /*drop-shadow*/':'') + ',' + delim;
+    if (textShadow) textShadow = 'text-shadow:' + delim + textShadow.substr (0, textShadow.length-2) + ';\n';
+    
+    //Text-color
+    
+    //Text-properties
+    
+    
+    return textShadow;
+}
+
+
+//render fill layer = gradient, solid fill
+function renderFillLayer(css) {
+    var boxShadow = "", cssStr="";
     //Box-shadow
-    var boxShadow = "";
     if (css['box-shadow-stroke']) boxShadow += css['box-shadow-stroke'] + (c?' /*stroke*/':'') + ',' + delim;
     if (css['inner-shadow']) boxShadow += css['inner-shadow'] + (c?' /*inner-shadow*/':'') + ',' + delim;
     if (css['inner-glow']) boxShadow += css['inner-glow'] + (c?' /*inner-glow*/':'') + ',' + delim;
-    if (css['outer-glow'])boxShadow += css['outer-glow'] + (c?' /*outer-glow*/':'') + ',' + delim;
-    if (css['drop-shadow'])boxShadow += css['drop-shadow'] + (c?' /*drop-shadow*/':'') + ',' + delim;
+    if (css['outer-glow']) boxShadow += css['outer-glow'] + (c?' /*outer-glow*/':'') + ',' + delim;
+    if (css['drop-shadow']) boxShadow += css['drop-shadow'] + (c?' /*drop-shadow*/':'') + ',' + delim;
     if (boxShadow) boxShadow = boxShadow.substr (0, boxShadow.length-2) + ';\n';
-    if (settings.showPrefixes){
+    /*if (settings.showPrefixes){ //Box-shadow is contemporary now, prefixes are deprecated. Don't look at them.
          for (var i = prefixes.length; i--;){
-            cssStr += prefixes[i] + 'box-shadow:' + delim + boxShadow;
-         }
-     } 
-    if (boxShadow) cssStr += 'box-shadow:' + delim + boxShadow;
+                cssStr += prefixes[i] + 'box-shadow:' + delim + boxShadow;
+             }
+         } */
+    if (boxShadow) boxShadow = 'box-shadow:' + delim + boxShadow;
+    cssStr += boxShadow;
     
-    //Border Stroke
-    if (css['border-stroke']) cssStr += 'border:' + delim+css['border-stroke'] + (c?' /*stroke*/':'') + ';\n'
-        
+     //Border Stroke    
+    if (css['border-stroke']) cssStr += 'border:' + delim+css['border-stroke'] + (c?' /*stroke*/':'') + ';\n';
+    
     //Background
     var gradientOverlay = "", colorOverlay = "";
-    if(css['gradient-overlay']) gradientOverlay += css['gradient-overlay'] + (c?' /*gradient overlay*/':'') + ',' + delim;  
+    if(css['gradient-overlay']) gradientOverlay += css['gradient-overlay'] + (c?' /*gradient overlay*/':'') + ',' + delim;
     if(css['color-overlay']) colorOverlay += css['color-overlay'] + (c?' /*color overlay*/':'') + ',' + delim;  
     if (gradientOverlay || colorOverlay){
-    if (settings.showPrefixes){
-         for (var i = prefixes.length; i--;){
-            var background = 'background:'+ delim + colorOverlay + prefixes[i] + gradientOverlay;
-            background = background.substr (0, background.length-2) + ';\n';
-            cssStr += background;
-         }
-     } 
-    var background = 'background:'+ delim + colorOverlay + gradientOverlay;
-            background = background.substr (0, background.length-2) + ';\n';
-            cssStr += background;
+        if (settings.showPrefixes){
+             for (var i = prefixes.length; i--;){
+                var background = 'background:'+ delim + colorOverlay + prefixes[i] + gradientOverlay;
+                background = background.substr (0, background.length-2) + ';\n';
+                cssStr += background;
+             }
+        } 
+        var background = 'background:'+ delim + colorOverlay + gradientOverlay;
+        background = background.substr (0, background.length-2) + ';\n';
+        cssStr += background;
     }
-    
-    //TODO: bevel & emboss
-    
-    
-    
     
     return cssStr;
 }
+
 
 /*===============================================================UI=======================================================*/
 function copyToClipboard(text){
@@ -581,10 +631,9 @@ function copyToClipboard(text){
 
 //Start is here
 generateCss(); //get css object filled
-var result = renderCss();
-//$.writeln("\n=============================");
-//$.writeln(result); //render css object to string
-copyToClipboard(result);
+var result = renderCss(layer);
+$.writeln(result); //render css object to string
+//copyToClipboard(result);
 
 app.notifiersEnabled = true
 app.notifiers.removeAll();
