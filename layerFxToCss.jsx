@@ -18,7 +18,8 @@ var settings = {
     wrapLines: false    ,
     comments: false,
     strokeType: 'box-shadow', //'box-shadow', 'border', 'outline'
-    makeTextProperties: true   
+    makeTextProperties: true,
+    showConfirms: false //confirmation dialogs on copying 
 }
 var prefixes = ['-webkit-','-moz-','-ms-','-o-'];
 var css = {
@@ -99,7 +100,7 @@ var generateCss = function(){
             
             var fxprop = getEffect(key);
             if (!fxprop) continue; //if not fx
-            //$.writeln(t2s(key))
+            $.writeln(t2s(key))
             proccess[t2s(key)] ? proccess[t2s(key)](fxprop) : "";        
     }
     return "";
@@ -111,7 +112,6 @@ var proccess = {
     "dropShadow" : function(fxProp){
         var styleValue = "", //resulting style
         enabled = fxProp.getBoolean(s2t("enabled")), 
-        mode, //TODO: take into account
         color = fxProp.getObjectValue(s2t("color")), 
         opacity = fxProp.getUnitDoubleValue(s2t("opacity")), 
         useGlobalAngle = fxProp.getBoolean(s2t("useGlobalAngle")), 
@@ -120,7 +120,11 @@ var proccess = {
         spread = fxProp.getUnitDoubleValue(s2t("chokeMatte")), 
         blur = fxProp.getUnitDoubleValue(s2t("blur"));        
         //TODO: make analysis of gradient fill layer, pattern fill layer & solid color fill layer instead returning
-        if (!enabled) return;        
+        if (!enabled) return;
+        var mode = fxProp.getEnumerationValue(s2t("mode"));
+        if (t2s(mode) != "normal") {
+            if (settings.showConfirms && !confirm("Drop Shadow is in "+t2s(mode)+" mode. Now supported only normal mode. Copy as normal?")) return "";            
+        } 
         //get global light angle
         if (useGlobalAngle) {
             var ref = new ActionReference();
@@ -136,13 +140,15 @@ var proccess = {
     "outerGlow" : function(fxProp){//TODO: take into account all glowing options
         var styleValue = "", //resulting style
         enabled = fxProp.getBoolean(s2t("enabled")), 
-        mode, //TODO: take into account
         color = fxProp.getObjectValue(s2t("color")), 
         opacity = fxProp.getUnitDoubleValue(s2t("opacity")), 
         spread = fxProp.getUnitDoubleValue(s2t("chokeMatte")), 
         blur = fxProp.getUnitDoubleValue(s2t("blur"));
-        if (!enabled) return;        
-        //showProperties(fxProp);        
+        if (!enabled) return; 
+        var mode = fxProp.getEnumerationValue(s2t("mode"));
+        if (t2s(mode) != "normal") {
+            if (settings.showConfirms && !confirm("Outer Glow is in "+t2s(mode)+" mode. Now supported only normal mode. Copy as normal?")) return "";            
+        }       
         styleValue += "0 0 " + getBlurStroke (blur, spread) + getColor(color, opacity);        
         css['outer-glow'] = styleValue;//do css object        
         return styleValue;
@@ -150,8 +156,7 @@ var proccess = {
 
     "innerShadow" : function(fxProp){
         var styleValue = "", 
-        enabled = fxProp.getBoolean(s2t("enabled")), 
-        mode, //TODO: take into account
+        enabled = fxProp.getBoolean(s2t("enabled")),
         color = fxProp.getObjectValue(s2t("color")), 
         opacity = fxProp.getUnitDoubleValue(s2t("opacity")), 
         spread = fxProp.getUnitDoubleValue(s2t("chokeMatte")), 
@@ -160,6 +165,10 @@ var proccess = {
         angle = fxProp.getUnitDoubleValue(s2t("localLightingAngle")),
         distance = fxProp.getUnitDoubleValue(s2t("distance"));        
         if (!enabled) return;    
+        var mode = fxProp.getEnumerationValue(s2t("mode"));
+        if (t2s(mode) != "normal") {
+            if (settings.showConfirms && !confirm("Inner Shadow is in "+t2s(mode)+" mode. Now supported only normal mode. Copy as normal?")) return "";            
+        }
         //get global light angle
         if (useGlobalAngle) {
             var ref = new ActionReference();
@@ -179,8 +188,11 @@ var proccess = {
         opacity = fxProp.getUnitDoubleValue(s2t("opacity")), 
         spread = fxProp.getUnitDoubleValue(s2t("chokeMatte")), 
         blur = fxProp.getUnitDoubleValue(s2t("blur"));
-        if (!enabled) return;        
-        //showProperties(fxProp);        
+        if (!enabled) return;      
+        var mode = fxProp.getEnumerationValue(s2t("mode"));
+        if (t2s(mode) != "normal") {
+            if (settings.showConfirms && !confirm("Inner Gllow is in "+t2s(mode)+" mode. Now supported only normal mode. Copy as normal?")) return "";            
+        }    
         styleValue += "inset 0 0 " + getBlurStroke (blur, spread) + getColor(color, opacity);        
         css['inner-glow'] = styleValue;//do css object        
         return styleValue;
@@ -192,13 +204,15 @@ var proccess = {
         try {
         var styleValue = "", //resulting style
         enabled = fxProp.getBoolean(s2t("enabled")), 
-        mode, //TODO: take into account
         color = fxProp.getObjectValue(s2t("color")), 
         opacity = fxProp.getUnitDoubleValue(s2t("opacity")), 
         size = fxProp.getUnitDoubleValue(s2t("size")),
         position = fxProp.getEnumerationValue(s2t("style"));
-        if (!enabled) return;        
-        //showProperties(fxProp);        
+        if (!enabled) return;   
+        var mode = fxProp.getEnumerationValue(s2t("mode"));
+        if (t2s(mode) != "normal") {
+            if (settings.showConfirms && !confirm("Stroke is in "+t2s(mode)+" mode. Now supported only normal mode. Copy as normal?")) return "";            
+        }
         switch (settings.strokeType){
             case "box-shadow":
                 switch (t2s(position)){
@@ -225,7 +239,21 @@ var proccess = {
 
 
 //Color overlay
-
+    "solidFill": function(fxProp){
+        var styleValue = "",
+        enabled = fxProp.getBoolean(s2t('enabled')),
+        opacity = fxProp.getUnitDoubleValue(s2t('opacity')),
+        mode = fxProp.getEnumerationValue(s2t("mode")),
+        color = fxProp.getObjectValue(s2t("color"));
+        if (!enabled) return;
+        if (t2s(mode) != "normal") {
+            if (settings.showConfirms && !confirm("Color Overlay is in "+t2s(mode)+" mode. Now supported only normal mode. Copy as normal?")) return "";            
+        }
+        styleValue = getColor(color, opacity);
+        css['color-overlay'] = styleValue;
+        $.writeln(t2s(mode))
+        return styleValue;
+    },
 
 //Gradient overlay of layer
     "gradientFill": function(fxProp){
@@ -240,6 +268,10 @@ var proccess = {
         scale = fxProp.getUnitDoubleValue(s2t('scale')),
         offset = fxProp.getObjectValue(s2t('offset'));
         if(!enabled) return;    
+        var mode = fxProp.getEnumerationValue(s2t("mode"));
+        if (t2s(mode) != "normal") {
+            if (settings.showConfirms && !confirm("Gradient Overlay is in "+t2s(mode)+" mode. Now supported only normal mode. Copy as normal?")) return "";            
+        }
         
         //showObject (gradient)
         gradientForm = gradient.getEnumerationValue(s2t('gradientForm'));
@@ -488,18 +520,21 @@ var renderCss = function(){
     if (css['border-stroke']) cssStr += 'border:' + delim+css['border-stroke'] + (c?' /*stroke*/':'') + ';\n'
         
     //Background
-    var gradientOverlay = "";
-    if(css['gradient-overlay']) gradientOverlay += css['gradient-overlay'] + (c?' /*gradient overlay*/':'') + ',' + delim;    
+    var gradientOverlay = "", colorOverlay = "";
+    if(css['gradient-overlay']) gradientOverlay += css['gradient-overlay'] + (c?' /*gradient overlay*/':'') + ',' + delim;  
+    if(css['color-overlay']) colorOverlay += css['color-overlay'] + (c?' /*color overlay*/':'') + ',' + delim;  
+    if (gradientOverlay || colorOverlay){
     if (settings.showPrefixes){
          for (var i = prefixes.length; i--;){
-            var background = 'background:'+ delim + prefixes[i] + gradientOverlay;
+            var background = 'background:'+ delim + colorOverlay + prefixes[i] + gradientOverlay;
             background = background.substr (0, background.length-2) + ';\n';
             cssStr += background;
          }
      } 
-    var background = 'background:'+ delim + gradientOverlay;
+    var background = 'background:'+ delim + colorOverlay + gradientOverlay;
             background = background.substr (0, background.length-2) + ';\n';
             cssStr += background;
+    }
     
     //TODO: bevel & emboss
     
@@ -508,14 +543,6 @@ var renderCss = function(){
     
     return cssStr;
 }
-
-//Start is here
-generateCss(); //get css object filled
-
-var result = renderCss();
-//$.writeln(result); //render css object to string
-//$.writeln("\n=============================");
-copyToClipboard(result);
 
 /*===============================================================UI=======================================================*/
 function copyToClipboard(text){
@@ -546,10 +573,20 @@ function copyToClipboard(text){
     //activeDocument.activeLayer.copy();
 
     //doc.selection.selectAll();
-    //docRef.selection.copy(true)
-    app.notifiersEnabled = true
-    app.notifiers.removeAll();
-    var eventFile = new File(app.path +"/Presets/Scripts/layerFxToCss.jsx");
-    app.notifiers.add("CpFX", eventFile);
-
+    //docRef.selection.copy(true);
+    
 };
+
+
+
+//Start is here
+generateCss(); //get css object filled
+var result = renderCss();
+//$.writeln("\n=============================");
+//$.writeln(result); //render css object to string
+copyToClipboard(result);
+
+app.notifiersEnabled = true
+app.notifiers.removeAll();
+var eventFile = new File(app.path +"/Presets/Scripts/layerFxToCss.jsx");
+app.notifiers.add("CpFX", eventFile);
