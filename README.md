@@ -4,14 +4,17 @@ Photoshop script that generates CSS3 rules based on effects of active layer
 <ul>
 	<li>Generation of CSS3 box-shadow rule based on drop-shadow, outer-glow, inner-shadow, inner-glow properties;</li>
 	<li>Copy stroke properties optional either as a border, outline or box-shadow;</li>
+	<li>[pending]Gradient overlay, color overlay & layer fill as multiple background;</li>
 	<li>[pending UI] Optional browser prefixes;</li>
 	<li>[Text-layer method pending] Command "Copy Layer Style" copies CSS string to clipboard;</li>
 	<li>[pending UI] Optional color formats: rgba, hsla, hex; </li>
-	<li>[pending] Correct CSS3-gradients based either on layer filling or gradient-overlay style property;</li>
 	<li>[pending] Texture overlay as data-URI;</li>
 	<li>[pending] Detection of round corners;</li>
 	<li>[pending] Correct sizing of element;</li>
-	<li>[pending] Text-shadow & text layers at all;</li>
+	<li>[pending] Text-shadow;</li>
+	<li>[pending] Popup with style on hotkey;</li>
+	<li>[pending] Text & paragraph properties;</li>
+	<li>[pending] 2 or more layers combining effects;</li>
 </ul>
 
 <h2>Usage</h2>
