@@ -1,4 +1,4 @@
-Photoshop script that generates CSS3 rules based on effects of active layer
+Copy Layer FX as CSS3 in one click
 ============================================================
 <h2>Features</h2>
 <ul>
