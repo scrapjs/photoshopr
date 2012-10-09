@@ -6,11 +6,11 @@
 //TODO: take into account overlay modes of color, gradient overlay
 //TODO: take into account opacity & fill, not only opacity
 
-//TODO: PRIORITY: debug launching by hotkey; do interface;
+//TODO: PRIORITY: do interface;
 
 //TODO: make 2 & more layers combining effects
 
-$.writeln("\n=============================");
+
 //Settings of script
 var settings = {
     showPrefixes : false,
@@ -513,12 +513,13 @@ var renderCss = function(){
 generateCss(); //get css object filled
 
 var result = renderCss();
-$.writeln(result); //render css object to string
-//copyToClipboard(result);
+//$.writeln(result); //render css object to string
+//$.writeln("\n=============================");
+copyToClipboard(result);
 
 /*===============================================================UI=======================================================*/
 function copyToClipboard(text){
-    alert("Placed to clipboard")
+    //alert("Placed to clipboard:"+text)
     /* Clippy.exe method. A big cons - launches the console.*/
     var folderForTempFiles = Folder.temp.fsName;
     // create a new textfile and put the text into it
@@ -546,4 +547,9 @@ function copyToClipboard(text){
 
     //doc.selection.selectAll();
     //docRef.selection.copy(true)
+    app.notifiersEnabled = true
+    app.notifiers.removeAll();
+    var eventFile = new File(app.path +"/Presets/Scripts/layerFxToCss.jsx");
+    app.notifiers.add("CpFX", eventFile);
+
 };
