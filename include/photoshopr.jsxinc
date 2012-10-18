@@ -1,0 +1,134 @@
+﻿#script "Photoshopr object"
+#target photoshop
+
+
+//Main class. There's app settings, environment, utils and so on.
+var Photoshopr = function(){
+    this._init();
+}
+Photoshopr.prototype = {
+    //Default settings
+    settings : {
+        showPrefixes : false,
+        colorFormat : 'rgb', //rgb, hsl, hex
+        wrapLines: false,
+        comments: true,
+        strokeType: 'box-shadow', //'box-shadow', 'border', 'outline'
+        characterProperties: false,
+        paragraphProperties: true,
+        //showConfirms: false, //confirmation dialogs on copying 
+        mergeBackground: true
+    },
+
+
+    //
+    _init: function(){
+        var self = this, o = self.settings;
+        self.DELIM = o.wrapLines ? "\n" : " ";
+        self.tempFolder = Folder.temp.fsName; //folderForTempFiles
+        self.loadSettings();
+        return self;
+    },
+    
+    
+    //load settings from json
+    loadSettings : function(){
+        var self = this;        
+        var f = new File (Folder.userData + "/settings.json");
+        //self.resetSettings();
+        try {
+            if (f.exists) {//Load existing settings            
+                f.open('r');
+                var settRaw = f.read();
+                //$.writeln("Existing settings");
+                self.settings = JSON.parse(settRaw);
+                f.close();
+            } else {//Make new settings based on defaults
+                f.open('w');
+                //$.writeln('New settings file');
+                f.write(JSON.stringify(self.settings));
+                f.close();
+            }
+        } catch (err) {//If something went wrong - anyway - create new settings
+            self.resetSettings();
+        }
+        return self;
+    },
+
+
+    //Save current settings to json
+    saveSettings : function(){
+        var self = this;        
+        var f = new File (Folder.userData + "/settings.json");
+         f.open('w');
+        //$.writeln('Save settings file\n');
+        f.write(JSON.stringify(self.settings));
+        f.close();
+        return self;
+    },
+
+
+    //Just removes settings file
+    resetSettings : function(){
+        var f = new File (Folder.userData + "/settings.json");
+        if(f.exists) f.remove();
+        f.close();
+    },
+
+
+    //Bind notifiers of all actions
+    bindNotifiers : function(){
+        var self = this;
+        app.notifiersEnabled = true
+        app.notifiers.removeAll();
+        //TODO:copying fx
+        //var copyFx = new File("./../copyFx.jsx");//File(app.path +"/Presets/Scripts/copyFx.jsx");
+        //app.notifiers.add("CpFX", eventFile);
+        //copying path
+        return self;
+    },
+
+
+    //TODO: do a textlayer way to copy to clipboard
+    copy : function(str){
+        var self = this;
+        /* Clippy.exe method. A big cons - launches the console.*/
+        var clipTxtFile =new File(self.tempFolder + "/ClipBoard.txt"); 
+        clipTxtFile.open('w'); 
+        clipTxtFile.write(str); 
+        clipTxtFile.close();
+        // use the clip.exe to copy the contents of the textfile to the windows clipboard
+        var clipBatFile =new File(self.tempFolder + "/ClipBoard.bat"); 
+        clipBatFile.open('w'); 
+        clipBatFile.writeln("cat \"" + self.tempFolder + "/ClipBoard.txt\"|clip"); 
+        clipBatFile.close(); 
+        clipBatFile.execute();
+
+        /*TODO: Text layer mathod. Is a way better.*/
+        //var textLayer = new ArtLayer();
+        //var newLayer = activeDocument.artLayers.add(); // Create a new ArtLayer object
+        //newLayer.name = "My Layer"; // name it for later reference
+        //var layerRef = activeDocument.artLayers.getByName("My Layer");
+        //$.writeln(doc.selection)
+        //activeDocument.activeLayer.copy();
+        //doc.selection.selectAll();
+        //docRef.selection.copy(true);
+        return self;
+    },
+
+
+    //Get active layer property in common case (based on psKey)
+    getActiveLayerProperty : function ( psKey, psType ) {
+        var ref;
+        ref = new ActionReference();
+        ref.putProperty( c2t( 'Prpr' ), psKey );
+        ref.putEnumerated( c2t('Lyr '), c2t('Ordn'), c2t('Trgt') );      
+        if( undefined == psType ) {
+          return executeActionGet( ref ).getObjectValue( psKey );
+        } else {
+            return executeActionGet( ref );
+        }
+    }
+}
+
+var photoshopr = new Photoshopr;

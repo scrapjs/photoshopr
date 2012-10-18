@@ -1,0 +1,16 @@
+﻿//Debugging needs. Supposed to be turned off in production
+$.writeln("====================")
+//Debug functions - logs to console all properties & their types of @param actionDescriptor
+var showDescriptor = function(actionDescriptor){
+    for (var i = actionDescriptor.count; i--;){    
+            var keyId = actionDescriptor.getKey(i), key = t2s(keyId);
+            $.writeln(key + '  :  ' + actionDescriptor.getType(keyId));
+        }
+}
+var log = function(arg){
+    if (arg instanceof ActionDescriptor) return showDescriptor(arg);    
+    var obj = arg;
+    for (var k in obj.reflect.properties){
+        $.writeln(obj.reflect.properties[k].name + '\t: ' + obj[obj.reflect.properties[k].name])
+    }
+}

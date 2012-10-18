@@ -1,0 +1,164 @@
+﻿#script "Models of Photoshopr"
+//Helpers
+//Return value between a & b based on leverage.
+Math.mid = function(a,b,leverage){
+   return a*leverage + b*(1-leverage);
+}
+
+
+//Gradient model
+var Gradient = function(o){
+    this._init(o);
+}    
+Gradient.prototype = {
+    options: {
+        type: "linear", //radial, linear, reflected
+        steps: [], //{location, color}
+        angle: 0, //in deg
+        opacity: 100,
+        LOCATION_RANGE:100
+    },
+    _init: function(o){
+        var self = this;
+        self.options.extend(o);
+    },
+    applyOverlay: function(color, mode){
+    },
+    toCSS: function(){
+        var self = this, o = self.options,
+        result = "";
+        //Make type of gradient
+        switch (o.type) {
+            case "radial":
+                result+= "radial-gradient(";
+                break;
+            default:
+                result+= "linear-gradient(";
+                //Do direction
+                switch (o.angle){
+                    case 90:
+                        result += "top, ";
+                        break;
+                    case -90:
+                    case 270:
+                    result += "bottom, ";
+                    break;
+                    case 0:
+                    result += "right, ";
+                    break;
+                    case 180:
+                    case -180:
+                    result += "left, ";
+                    break;
+                    default:
+                    result += angle + "deg, ";
+                }
+            }
+        //Make steps of gradient
+        o.steps.sort(function(a,b){return a.location - b.location});
+        for (var i = 0; i < o.steps; i++){
+            result += o.steps[i].color.applyOpacity(o.opacity).toCSS();
+            result += o.steps[i].location + "%, ";
+        }
+    result = result.substr (0, result.length-2) + ')'; 
+    return result;
+    }
+}
+
+
+
+//Extend color model
+SolidColor.extend({
+    //Create new color object
+    create : function(arg) {
+        if (arg instanceof SolidColor) {//clone color
+            var c = new SolidColor();
+            c.rgb.red = arg.rgb.red;
+            c.rgb.green = arg.rgb.green;
+            c.rgb.blue = arg.rgb.blue;
+            return c;
+        }
+        else if (arg instanceof ActionDescriptor) {//create from actiondescr
+            var c = new SolicdColor();
+            c.rgb.red = Math.round(arg.getDouble(s2t("red")));
+            c.rgb.green = Math.round(arg.getDouble(s2t("grain")));
+            c.rgb.blue = Math.round(arg.getDouble(s2t("blue")));
+            return c;
+        } else {
+            return new SolidColor();
+        }
+    }
+});
+SolidColor.prototype.extend({
+    options:{
+        mode:'normal',
+        format: 'rgb', //hsl, rgb, hex
+        opacity: 100
+    },
+    toCSS:function(){
+        var self = this, o = self.options;
+        var colorVal = "",
+        opacity = o.opacity === 0 ? 0 : (o.opacity || 100),
+        colorObj = self;        
+        opacity = Math.round(opacity);        
+        switch (o.format){
+                case 'rgb':
+                    var r = colorObj.rgb.red.toFixed(0),
+                    g = colorObj.rgb.green.toFixed(0),
+                    b = colorObj.rgb.blue.toFixed(0);
+                    colorVal = (opacity >= 100) ? ('rgb('+r+', '+g+', '+b+')') : ('rgba('+r+', '+g+', '+b+', '+(opacity*.01).toFixed(2).slice(1)+')');
+                    break;
+                case 'hsl':
+                    var h = colorObj.hsb.hue, 
+                    l = (2-colorObj.hsb.saturation*0.01) * colorObj.hsb.brightness*0.01, 
+                    s = colorObj.hsb.saturation*0.01 * colorObj.hsb.brightness*0.01;
+                    s = (l <= 1) ? l : (2 - l);
+                    l /= 2;
+                    s = s.toFixed(3)*100+'%';
+                    l = l.toFixed(3)*100+'%';
+                    colorVal = (opacity == 100) ? ('hsl('+h+', '+s+', '+l+')') : ('hsla('+h+', '+s+', '+l+', '+(opacity*.01).toFixed(2).slice(1)+')');
+                    break;
+                case 'hex':
+                    colorVal = '#'+colorObj.rgb.hexValue.toLowerCase();
+                    break;
+            }
+        return colorVal;    
+    },    
+    //Returns new color object with color between self & colorB
+    getMix : function(colorB, midpoint){
+        var self = this, colorA = self,
+        colorObj = new SolidColor();
+        midpoint = midpoint || .5;
+        midpoint = Math.max(Math.min(midpoint, 1), 0);
+        colorObj.rgb.red = Math.mid( colorA.rgb.red, colorB.rgb.red, midpoint );
+        colorObj.rgb.green = Math.mid( colorA.rgb.green, colorB.rgb.green, midpoint );
+        colorObj.rgb.blue = Math.mid( colorA.rgb.blue, colorB.rgb.blue, midpoint );
+        return colorObj;
+    }
+});
+
+
+//Shadow model
+var Shadow = function(o){
+    this._init(o);
+}
+Shadow.prototype = {
+    options:{
+        isTextShadow:false,
+        inset:false,
+        x:0,
+        y:0,
+        stroke:0,
+        blur:0,
+        color:null,
+        opacity: 100
+    },
+    _init: function(o){
+        var self = this;
+        self.options.extend(o);
+    },
+    toCSS: function(){
+        var self = this, o =this.options;
+        return o.x+"px " + o.y + "px " + o.blur + "px " + (o.isTextShadow?(o.spread+"px "):"") + o.color.toCSS();
+    }
+}

@@ -1,6 +1,20 @@
 Copy Layer FX as CSS3 in one click
 ============================================================
 <h2>Features</h2>
+//TODO: make site description & donate
+//TODO: make text properties
+
+//TODO: do sizes or text props
+
+//TODO: take into account overlay modes of color, gradient overlay
+//TODO: take into account opacity & fill
+
+//TODO: PRIORITY: do interface;
+
+//TODO: make 2 & more layers combining effects
+    
+//TODO: bevel & emboss
+//TODO: make analysis of gradient fill layer, pattern fill layer & solid color fill layer instead returning
 <ul>
 	<li>Generation of CSS3 box-shadow rule based on drop-shadow, outer-glow, inner-shadow, inner-glow properties;</li>
 	<li>Copy stroke properties optional either as a border, outline or box-shadow;</li>
@@ -19,7 +33,7 @@ Copy Layer FX as CSS3 in one click
 
 <h2>Usage</h2>
 <ul>
-	<li>To install drop *.jsx to %PHOTOSHOP_FOLDER%/Presets/Scripts and run File→Scripts→Photoshopr.</li>
+	<li>To install drop layerFxToCss.jsx to %PHOTOSHOP_FOLDER%/Presets/Scripts and run it once.</li>
 	<li>To use just copy layer style, a resulting css will be placed to the clipboard. Then paste style into your IDE, editor or even chrome web-inspector.</li>
 	<li>To change settings go to File→Scripts→Photoshopr. </li>
 </ul>
