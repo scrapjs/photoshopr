@@ -6,10 +6,20 @@
 
 var s2t =stringIDToTypeID, t2s = typeIDToStringID, t2c = typeIDToCharID, c2t = charIDToTypeID;
 
-var extend = function(objA, objB){
-    if (!objB) return objA;
-	for (var name in objB) {
-		objA[name] = objB[name];
-	}
-	return objA;
+var extend = function(){
+    var resObj  = arguments[0] || {};
+    if (!arguments[1]) return arguments[0];
+    for (var i = 1; i < arguments.length; i++){
+        if (!arguments[i]) continue;
+        for (var name in arguments[i]) {
+            resObj[name] = arguments[i][name];
+        }
+    }
+    return resObj;
+}
+
+
+//Return value between a & b based on leverage.
+Math.mid = function(a,b,leverage){
+   return a*leverage + b*(1-leverage);
 }

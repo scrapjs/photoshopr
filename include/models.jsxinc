@@ -1,39 +1,45 @@
 ﻿#script "Models of Photoshopr"
-//Helpers
-//Return value between a & b based on leverage.
-Math.mid = function(a,b,leverage){
-   return a*leverage + b*(1-leverage);
+//Simple mix for getting/setting options
+GetSetOptions = {
+    get: function(name){
+        return this.options && this.options[name];
+    }, 
+    set: function(name, value){
+        this.options && (this.options[name] = value);
+    }
 }
-
 
 //Gradient model
 var Gradient = function(o){
-    this._init(o);
+    return this._init(o);
 }    
-Gradient.prototype = {
+extend(Gradient.prototype = {
     options: {
         type: "linear", //radial, linear, reflected
         steps: [], //{location, color}
         angle: 0, //in deg
         opacity: 100,
-        LOCATION_RANGE:100
+        LOCATION_RANGE:100,
+        comment: "" //To insert in css rendering
     },
     _init: function(o){
         var self = this;
-        self.options.extend(o);
+        extend(self.options, o);
+        return self;
     },
     applyOverlay: function(color, mode){
     },
-    toCSS: function(){
+    toCSS: function(prefix){
         var self = this, o = self.options,
         result = "";
+        prefix = prefix || "";
         //Make type of gradient
         switch (o.type) {
             case "radial":
-                result+= "radial-gradient(";
+                result+= prefix + "radial-gradient(";
                 break;
             default:
-                result+= "linear-gradient(";
+                result+= prefix + "linear-gradient(";
                 //Do direction
                 switch (o.angle){
                     case 90:
@@ -60,73 +66,94 @@ Gradient.prototype = {
             result += o.steps[i].color.applyOpacity(o.opacity).toCSS();
             result += o.steps[i].location + "%, ";
         }
-    result = result.substr (0, result.length-2) + ')'; 
+    result = result.substr (0, result.length-2) + ')';
+    o.comment && (result += " /*" + o.comment + "*/");
     return result;
     }
-}
+}, GetSetOptions);
 
 
 
 //Extend color model
-SolidColor.extend({
+var Color = function(arg){
+    return this._init(arg);
+}
+extend(Color, {
     //Create new color object
-    create : function(arg) {
+    create : function(arg, opts) {
         if (arg instanceof SolidColor) {//clone color
-            var c = new SolidColor();
-            c.rgb.red = arg.rgb.red;
-            c.rgb.green = arg.rgb.green;
-            c.rgb.blue = arg.rgb.blue;
+            var c = new Color(extend({
+                color:arg
+            }, opts));
             return c;
         }
         else if (arg instanceof ActionDescriptor) {//create from actiondescr
-            var c = new SolicdColor();
-            c.rgb.red = Math.round(arg.getDouble(s2t("red")));
-            c.rgb.green = Math.round(arg.getDouble(s2t("grain")));
-            c.rgb.blue = Math.round(arg.getDouble(s2t("blue")));
+            var sc = new SolidColor();
+            sc.rgb.red=Math.round(arg.getDouble(s2t("red")));
+            sc.rgb.green=Math.round(arg.getDouble(s2t("grain")));
+            sc.rgb.blue=Math.round(arg.getDouble(s2t("blue")));
+            var c = new Color(extend({
+                color:sc
+            },opts));
             return c;
-        } else {
-            return new SolidColor();
+        } else { //simple create
+            return new Color(arg);
         }
     }
 });
-SolidColor.prototype.extend({
+extend(Color.prototype, {
     options:{
         mode:'normal',
         format: 'rgb', //hsl, rgb, hex
-        opacity: 100
+        opacity: 100,
+        color:null, //It would be a SolidColor
+        comment:"" //To insert after color def in css
     },
+    _init:function(opts){
+        var self = this, o = self.options;
+        extend(self.options, opts);
+        if (!o.color) o.color = new SolidColor();
+        return self;
+    },
+    r:function(){return this.options.color.rgb.red},
+    g:function(){return this.options.color.rgb.green},
+    b:function(){return this.options.color.rgb.blue},
+    h:function(){return this.options.color.hsb.hue},
+    s:function(){return this.options.color.hsb.saturation},
+    b:function(){return this.options.color.hsb.brightness},
     toCSS:function(){
         var self = this, o = self.options;
         var colorVal = "",
         opacity = o.opacity === 0 ? 0 : (o.opacity || 100),
-        colorObj = self;        
+        colorObj = o.color;        
         opacity = Math.round(opacity);        
         switch (o.format){
-                case 'rgb':
-                    var r = colorObj.rgb.red.toFixed(0),
-                    g = colorObj.rgb.green.toFixed(0),
-                    b = colorObj.rgb.blue.toFixed(0);
-                    colorVal = (opacity >= 100) ? ('rgb('+r+', '+g+', '+b+')') : ('rgba('+r+', '+g+', '+b+', '+(opacity*.01).toFixed(2).slice(1)+')');
-                    break;
-                case 'hsl':
-                    var h = colorObj.hsb.hue, 
-                    l = (2-colorObj.hsb.saturation*0.01) * colorObj.hsb.brightness*0.01, 
-                    s = colorObj.hsb.saturation*0.01 * colorObj.hsb.brightness*0.01;
-                    s = (l <= 1) ? l : (2 - l);
-                    l /= 2;
-                    s = s.toFixed(3)*100+'%';
-                    l = l.toFixed(3)*100+'%';
-                    colorVal = (opacity == 100) ? ('hsl('+h+', '+s+', '+l+')') : ('hsla('+h+', '+s+', '+l+', '+(opacity*.01).toFixed(2).slice(1)+')');
-                    break;
-                case 'hex':
-                    colorVal = '#'+colorObj.rgb.hexValue.toLowerCase();
-                    break;
-            }
+            case 'rgb':
+                var r = colorObj.rgb.red.toFixed(0),
+                g = colorObj.rgb.green.toFixed(0),
+                b = colorObj.rgb.blue.toFixed(0);
+                colorVal = (opacity >= 100) ? ('rgb('+r+', '+g+', '+b+')') : ('rgba('+r+', '+g+', '+b+', '+(opacity*.01).toFixed(2).slice(1)+')');
+                break;
+            case 'hsl':
+                var h = colorObj.hsb.hue, 
+                l = (2-colorObj.hsb.saturation*0.01) * colorObj.hsb.brightness*0.01, 
+                s = colorObj.hsb.saturation*0.01 * colorObj.hsb.brightness*0.01;
+                s = (l <= 1) ? l : (2 - l);
+                l /= 2;
+                s = s.toFixed(3)*100+'%';
+                l = l.toFixed(3)*100+'%';
+                colorVal = (opacity == 100) ? ('hsl('+h+', '+s+', '+l+')') : ('hsla('+h+', '+s+', '+l+', '+(opacity*.01).toFixed(2).slice(1)+')');
+                break;
+            case 'hex':
+                colorVal = '#'+colorObj.rgb.hexValue.toLowerCase();
+                break;
+        }        
+        o.comment && (colorVal += " /*" + o.comment + "*/");
         return colorVal;    
     },    
     //Returns new color object with color between self & colorB
     getMix : function(colorB, midpoint){
-        var self = this, colorA = self,
+        var self = this, colorA = self.options.color,
         colorObj = new SolidColor();
         midpoint = midpoint || .5;
         midpoint = Math.max(Math.min(midpoint, 1), 0);
@@ -134,15 +161,21 @@ SolidColor.prototype.extend({
         colorObj.rgb.green = Math.mid( colorA.rgb.green, colorB.rgb.green, midpoint );
         colorObj.rgb.blue = Math.mid( colorA.rgb.blue, colorB.rgb.blue, midpoint );
         return colorObj;
+    },
+    //Makes color opacity
+    applyOpacity: function(opacity){
+        var self = this, o = self.options;
+        o.opacity = .01*o.opacity*opacity;
+        return self;
     }
-});
+}, GetSetOptions);
 
 
 //Shadow model
 var Shadow = function(o){
-    this._init(o);
+    return this._init(o);
 }
-Shadow.prototype = {
+extend(Shadow.prototype,{
     options:{
         isTextShadow:false,
         inset:false,
@@ -151,14 +184,19 @@ Shadow.prototype = {
         stroke:0,
         blur:0,
         color:null,
-        opacity: 100
+        opacity: 100,
+        comment: ""
     },
     _init: function(o){
         var self = this;
-        self.options.extend(o);
+        extend(self.options, o);
+        return self;
     },
     toCSS: function(){
         var self = this, o =this.options;
-        return o.x+"px " + o.y + "px " + o.blur + "px " + (o.isTextShadow?(o.spread+"px "):"") + o.color.toCSS();
+        var result = "";
+        result += o.x+"px " + o.y + "px " + o.blur + "px " + (o.isTextShadow?(o.spread+"px "):"") + o.color.toCSS();
+        o.comment && (result += " /*" + o.comment + "*/");
+        return result;
     }
-}
+}, GetSetOptions)

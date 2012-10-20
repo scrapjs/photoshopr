@@ -16,7 +16,7 @@ Photoshopr.prototype = {
         strokeType: 'box-shadow', //'box-shadow', 'border', 'outline'
         characterProperties: false,
         paragraphProperties: true,
-        //showConfirms: false, //confirmation dialogs on copying 
+        sizes: false, //to do or not sizes of element
         mergeBackground: true
     },
 
@@ -24,9 +24,9 @@ Photoshopr.prototype = {
     //
     _init: function(){
         var self = this, o = self.settings;
-        self.DELIM = o.wrapLines ? "\n" : " ";
         self.tempFolder = Folder.temp.fsName; //folderForTempFiles
         self.loadSettings();
+        self.DELIM = o.wrapLines ? "\n" : " ";
         return self;
     },
     
@@ -124,7 +124,13 @@ Photoshopr.prototype = {
         ref.putProperty( c2t( 'Prpr' ), psKey );
         ref.putEnumerated( c2t('Lyr '), c2t('Ordn'), c2t('Trgt') );      
         if( undefined == psType ) {
-          return executeActionGet( ref ).getObjectValue( psKey );
+          var res = executeActionGet( ref );
+          try {
+          return res.getObjectValue( psKey );
+          } catch (err) {
+              //alert("Background layer has no FX.");
+              return false;
+          }
         } else {
             return executeActionGet( ref );
         }

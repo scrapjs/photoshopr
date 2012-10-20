@@ -2,7 +2,7 @@
 
 //Layer fx function
 (function(P){
-P.extend({
+extend(P, {
     prefixes : ['-webkit-','-moz-','-ms-','-o-'],
     cssModel : {
         'box-shadow':[], 
@@ -26,15 +26,16 @@ P.extend({
         'padding':null
     },
 
-    
+    /*==============================================Parsing model=============*/
     //Makes model based on FX
     parseFx : function(){
-        for (var i = layerFX.count; i--;){
-                var key = layerFX.getKey(i), fxprop;            
+        var self = this;
+        for (var i = self.lFX.count; i--;){ //For every FX
+                var key = self.lFX.getKey(i), fxprop;            
                 try {
-                    var fxprop = layerFX.getObjectValue(key);
+                    var fxprop = self.lFX.getObjectValue(key); //Get FX Object
                     //$.writeln(t2s(key));
-                    proccessFx[t2s(key)] ? proccessFx[t2s(key)](fxprop) : "";            
+                    self.proccessFx[t2s(key)] && self.proccessFx[t2s(key)](fxprop);            
                 } catch (err) {
                     //$.writeln("I can't get layer fx. I'm sorry.");
                 }       
@@ -42,13 +43,23 @@ P.extend({
     },
 
 
-    //Fill model of text properties
-    parseText : function(){
+    //Fill model of fill-layer properties
+    parseFill : function(){
     },
 
 
-    //Fill model of fill-layer properties
-    parseLayer : function(){
+    //Fill model of character properties
+    parseCharacter : function(){
+    },
+
+
+    //Parse paragraph properties
+    parseParagraph: function(){
+    },
+
+    
+    //Parse whether raster layer or pattern fill layer
+    parseBMP: function(){
     },
 
 
@@ -57,13 +68,15 @@ P.extend({
         "dropShadow" : function(fxProp){
             var shadow,
             enabled = fxProp.getBoolean(s2t("enabled")), 
-            color = fxProp.getObjectValue(s2t("color")), 
+            colorRef = fxProp.getObjectValue(s2t("color")), 
             opacity = fxProp.getUnitDoubleValue(s2t("opacity")), 
             useGlobalAngle = fxProp.getBoolean(s2t("useGlobalAngle")), 
             angle = fxProp.getUnitDoubleValue(s2t("localLightingAngle")),
             distance = fxProp.getUnitDoubleValue(s2t("distance")), 
             spread = fxProp.getUnitDoubleValue(s2t("chokeMatte")), 
-            blur = fxProp.getUnitDoubleValue(s2t("blur"));        
+            blur = fxProp.getUnitDoubleValue(s2t("blur"));   
+            var color = SolidColor.create(colorRef);
+            color.options.opacity = opacity;
             if (!enabled) return;
             var mode = fxProp.getEnumerationValue(s2t("mode"));
             //get global light angle
@@ -72,15 +85,14 @@ P.extend({
                 ref.putEnumerated( c2t("Lyr "), c2t("Ordn"), c2t("Trgt") ); 
                 angle = executeActionGet(ref).getInteger(s2t('globalAngle'));
             }        
-            var blurStroke = getBlurStroke(blur, spread);
-            if (lKind == LayerKind.TEXT){
+            var blurStroke = self.getBlurStroke(blur, spread);
+            if (self.lKind == LayerKind.TEXT){
                 shadow = new Shadow({
                 isTextShadow: true,
                 x: getX(angle, distance),
                 y: getY(angle, distance),
                 blur: blurStroke.blur + blurStroke.stroke,
-                mode: mode,
-                opacity: opacuty
+                color: color
                 });
                 cssModel['text-shadow'].push(shadow);
             } else {
@@ -246,20 +258,16 @@ P.extend({
 
     //Color overlay
         "solidFill": function(fxProp){
-            var styleValue = "",
-            enabled = fxProp.getBoolean(s2t('enabled')),
+            $.writeln("inside solid fill")
+            var enabled = fxProp.getBoolean(s2t('enabled')),
             opacity = fxProp.getUnitDoubleValue(s2t('opacity')),
             mode = fxProp.getEnumerationValue(s2t("mode")),
-            color = fxProp.getObjectValue(s2t("color"));
+            colorDesc = fxProp.getObjectValue(s2t("color"));
             if (!enabled) return;
-            if (t2s(mode) != "normal") {
-                if (settings.showConfirms && !confirm("Color Overlay is in "+t2s(mode)+" mode. Now supported only normal mode. Copy as normal?")) return "";            
-            }
-            styleValue = getColorStr(color, opacity);
-            css['color-overlay'] = styleValue;
-            cssModel['background'].push()
-            $.writeln(t2s(mode))
-            return styleValue;
+            var color = Color.create(colorDesc, {opacity: opacity, mode:t2s(mode)});
+            if (P.settings.comments) color.set("comment", "Color Overlay");
+            P.cssModel['background'].push(color);
+            log(self.cssModel);
         },
 
     //Gradient overlay of layer
@@ -314,8 +322,6 @@ P.extend({
             return styleValue;
         }
 
-
-    //Fill layer
 
     },
 
@@ -442,29 +448,63 @@ P.extend({
 
 
 
-    /*===========================================================Rendering===============================================*/
-    //Returns string from css object
-    renderCssModel : function(layer){
-        var cssStr = "";    
-        c = settings.comments;    
-        
-        //Box-shadow or text-shadow
-        switch (layer.kind) {
-            case LayerKind.GRADIENTFILL: //This couple has a different background-fill strategy;
-            case LayerKind.SOLIDFILL:
-            case LayerKind.NORMAL: //This layers renders with data-URI in background;
-            case LayerKind.PATTERNFILL:
-                cssStr += renderFillLayer(css);
-                break;
-            case LayerKind.TEXT: //Text effects rendered as a text-shadow instead of box-shadow;
-                cssStr += renderTextLayer(css);
-                break;
-        }    
+    /*=====================================================Rendering===============================================*/
+    //Returns string from css model through all properties
+    renderCSSModel : function(){
+        var self = this, cssStr = "";    
+        c = P.settings.comments;        
+        cssStr += self.renderBackground();
+        cssStr += self.renderShadows();
         return cssStr;
+    },
+    
+    //Returns result of treating background property of cssmodel
+    renderBackground : function(){
+        var self =this, o = self.settings;
+        var result = "";
+        if (o.mergeBackground){ //render blend modes background
+            result = self.renderMergedBackground();
+        } else { //render normal modes background
+            if (o.showPrefixes){
+                for (var i = prefixes.length; i--;){      
+                    result += self.renderMultipleBackground(prefixes[i]);
+                }
+            };
+            result += self.renderMultipleBackground();
+        }
+        return result;
+    },
+
+    //Merge backgorunds to one through blend modes
+    renderMergedBackground: function(){
+        var self = this, o = self.settings, result = "";
+        return result;
+    },
+    
+    //Make backgrounds as multiple background in normal blending mode
+    renderMultipleBackground : function(prefix){
+        var self = this, o = self.settings, 
+        delim = self.DELIM, 
+        bgs = self.cssModel["background"];
+        if (bgs.length == 0) return "";
+        var result = 'background:'+ delim;
+        prefix = prefix || "";
+        for (var i = 0; i < bgs.length; i++){
+            result += bgs[i].toCSS(prefix) + "," + delim;
+        }
+        result = result.substr (0, result.length-2) + ';\n';
+        return result;
     },
 
 
-    //render for the text layer
+    //Returns css shadows string in accordance to cssModel: text-shadow, background-shadow. 
+    renderShadows: function(){
+        var self = this, o = self.settings, result = "";
+        return result;
+    },
+    
+    
+    //deprecated render for the text layer 
     renderTextLayer : function(css){
         //Text-shadow
         var textShadow = "";
@@ -483,7 +523,7 @@ P.extend({
     },
 
 
-    //render fill layer = gradient, solid fill
+    //deprecated render fill layer = gradient, solid fill
     renderFillLayer : function(css) {
         var boxShadow = "", cssStr="";
         //Box-shadow
@@ -525,23 +565,45 @@ P.extend({
    
     //Main function - returns CSS string with rendered result
     getLayerCss : function(){
-        var result = "";
+        var self = this, o = self.settings, 
+        result = "";
         //try to get active layer properties
         try {
-            var layer = app.activeDocument.activeLayer;
-            var lFX = getActiveLayerProperty( c2t( 'Lefx' ) ),
-            lKind = layer.kind,
-            lOpacity,
-            lFill,
-            lMode,
-            lVisible,
-            lText,
-            lShape;
+            self.layer = app.activeDocument.activeLayer;
+            if (!self.layer) { return '/*No layer selected*/'}
+            self.lFX = self.getActiveLayerProperty( c2t( 'Lefx' ) );
+            if (!self.lFX) { return '/*Background layer has no FX*/'}; //FX not found
         } catch (err) {
             //No document opened or active layer selected
-            return;
+           alert("Something has broken when tried to find FX of layer.");
+           return '';
+           // return "";
         }
-        
+        self.lKind = self.layer.kind,
+        self.lOpacity,
+        self.lFill,
+        self.lMode,
+        self.lVisible,
+        self.lText,
+        self.lShape;        
+        //Make model
+        self.parseFx(); 
+        switch (self.lKind){
+            case LayerKind.SOLIDFILL:
+            case LayerKind.GRADIENTFILL:
+                self.parseFill();
+                break;
+            case LayerKind.TEXT:
+                if (o.characterProperties) self.parseCharacter();
+                if (o.paragraphProperties) self.parseParagraph();
+                break;
+            case LayerKind.NORMAL:
+            case LayerKind.PATTERNFILL:
+                self.parseBMP();
+            default: //There is effects layer. IDK what to do here.                    
+        };
+        //Render whole model
+        result += self.renderCSSModel();        
         return result;                
     }
 

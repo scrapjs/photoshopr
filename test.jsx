@@ -1,0 +1,26 @@
+﻿#include "include/debug.jsxinc"
+#include "include/util.jsxinc"
+#include "include/models.jsxinc"
+#include "include/photoshopr.jsxinc"
+
+
+//log( extend({a:23, b:1,c:2,d:3}, {b:3}, {c:4,d:5}, {f:12}, {b:5}, undefined, {}) )
+
+/* Tests supposed to perform */
+
+// - Color overlay opacity
+// - Color overlay blending mode
+// - Color overlay commented
+// - Color overlay as multiple bg component
+// - Color overlay alone
+
+// - Solid fill opacity
+// - Solid fill blending mode
+// - Solid fill commented,
+// - Solid fill as a multiple bg component
+// - Solid fill alone
+
+// - Gradient fill opacity
+// - Gradient fill alone commented
+// - Gradient fill as a component
+// - Gradient fill commented
