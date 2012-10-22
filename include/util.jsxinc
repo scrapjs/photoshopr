@@ -17,9 +17,3 @@ var extend = function(){
     }
     return resObj;
 }
-
-
-//Return value between a & b based on leverage.
-Math.mid = function(a,b,leverage){
-   return a*leverage + b*(1-leverage);
-}

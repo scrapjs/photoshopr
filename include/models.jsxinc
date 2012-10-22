@@ -24,7 +24,7 @@ extend(Gradient.prototype = {
     },
     _init: function(o){
         var self = this;
-        extend(self.options, o);
+        self.options = extend({},self.options, o);
         return self;
     },
     applyOverlay: function(color, mode){
@@ -111,16 +111,18 @@ extend(Color.prototype, {
     },
     _init:function(opts){
         var self = this, o = self.options;
-        extend(self.options, opts);
+        self.options = extend({},self.options, opts);
         if (!o.color) o.color = new SolidColor();
         return self;
     },
-    r:function(){return this.options.color.rgb.red},
-    g:function(){return this.options.color.rgb.green},
-    b:function(){return this.options.color.rgb.blue},
-    h:function(){return this.options.color.hsb.hue},
-    s:function(){return this.options.color.hsb.saturation},
-    b:function(){return this.options.color.hsb.brightness},
+    r:function(arg){return (arg!==undefined) ? (this.options.color.rgb.red = arg) : this.options.color.rgb.red},
+    g:function(arg){return (arg!==undefined) ? (this.options.color.rgb.green= arg) : this.options.color.rgb.green},
+    b:function(arg){return (arg!==undefined) ? (this.options.color.rgb.blue = arg) : this.options.color.rgb.blue},
+    h:function(arg){return (arg!==undefined) ? (this.options.color.hsb.hue = arg) : this.options.color.hsb.hue},
+    s:function(arg){return (arg!==undefined) ? (this.options.color.hsb.saturation = arg) : this.options.color.hsb.saturation},
+    br:function(arg){return (arg!==undefined) ? (this.options.color.hsb.brightness = arg) : this.options.color.hsb.brightness},
+    a:function(arg){return (arg!==undefined) ? (this.options.opacity = arg*100) : this.options.opacity*.01},
+    opacity:function(arg){return (arg!==undefined) ? (this.options.opacity = arg) : this.options.opacity},
     toCSS:function(){
         var self = this, o = self.options;
         var colorVal = "",
@@ -156,10 +158,10 @@ extend(Color.prototype, {
         var self = this, colorA = self.options.color,
         colorObj = new SolidColor();
         midpoint = midpoint || .5;
-        midpoint = Math.max(Math.min(midpoint, 1), 0);
-        colorObj.rgb.red = Math.mid( colorA.rgb.red, colorB.rgb.red, midpoint );
-        colorObj.rgb.green = Math.mid( colorA.rgb.green, colorB.rgb.green, midpoint );
-        colorObj.rgb.blue = Math.mid( colorA.rgb.blue, colorB.rgb.blue, midpoint );
+        midpoint = Graph.max(Graph.min(midpoint, 1), 0);
+        colorObj.rgb.red = Graph.mid( colorA.rgb.red, colorB.rgb.red, midpoint );
+        colorObj.rgb.green = Graph.mid( colorA.rgb.green, colorB.rgb.green, midpoint );
+        colorObj.rgb.blue = Graph.mid( colorA.rgb.blue, colorB.rgb.blue, midpoint );
         return colorObj;
     },
     //Makes color opacity
@@ -189,7 +191,7 @@ extend(Shadow.prototype,{
     },
     _init: function(o){
         var self = this;
-        extend(self.options, o);
+        self.options = extend({},self.options, o);
         return self;
     },
     toCSS: function(){
@@ -200,3 +202,123 @@ extend(Shadow.prototype,{
         return result;
     }
 }, GetSetOptions)
+
+
+//Singletone object of some graphics methods
+var Graph = extend({
+//Function that returns result of blending of objA and objB. Object B is ontop of objA.
+applyOverlay : function(objA, objB){
+    var a = "C", b = "C";    
+    if (objA instanceof Gradient) a = "G";
+    if (objB instanceof Gradient) b = "G";
+    var result = this["apply"+a+b+"Overlay"](objA, objB, objB.get('mode'));
+    return result;
+},
+//color over color
+applyCCOverlay : function(colorA, colorB, mode){
+    //Reslt of overlay is a mix of blended top layer and bottom origin layer leveraged by opacity-midpoint.
+    return this.proccessBlend[mode](colorA, colorB);
+},
+//gradient over color
+applyGCOverlay : function(grad, color, mode){
+    return grad;
+},
+//color over gradient
+applyCGOverlay : function(color, grad, mode){
+    return color;
+},
+//gradient over gradient
+applyGGOverlay : function(gradA, gradB, mode){
+    return gradA
+},
+
+//Object with blend modes proccessings
+proccessBlend : {
+    "normal" : function(ca, cb){
+        var c = new Color();
+        c.r(ca.r() * ca.a() + cb.r() * cb.a() * (1 - ca.a()));
+        c.g(ca.g() * ca.a() + cb.g() * cb.a() * (1 - ca.a()));
+        c.b(ca.b() * ca.a() + cb.b() * cb.a() * (1 - ca.a()));
+        c.a(ca.a() + cb.a()*(1-ca.a()));
+        return c;
+    },
+    "darken" : function(){
+    },
+    "multiply" : function(){
+    },    
+    "colorBurn" : function(){
+    },
+    "linearBurn" : function(){
+    },
+    "darkerColor" : function(){
+    },
+
+    "lighten" : function(){
+    },
+    "screen" : function(){
+    },
+    "colorDodge" : function(){
+    },
+    "linearDodge" : function(){
+    },
+    "lighterColor" : function(){
+    },
+
+    "overlay" : function(){
+    },
+    "softLight" : function(){
+    },
+    "hardLight" : function(){
+    },
+    "vividLight" : function(){
+    },
+    "linearLight" : function(){
+    },
+    "pinLight" : function(){
+    },
+    "hardMix" : function(){
+    },
+
+    "difference" : function(){
+    },
+    "exclusion" : function(){
+    },
+    "subtract" : function(){
+    },
+    "divide" : function(){
+    },
+
+    "hue" : function(){
+    },
+    "saturation" : function(){
+    },
+    "color" : function(){
+    },
+    "luminosity" : function(){
+    }
+},
+    
+
+
+//Return color between A & B
+getMidColor : function (colorA, colorB, midpoint) {
+     var self = this,
+    colorObj = new SolidColor();
+    midpoint = midpoint || .5;
+    midpoint = self.max(self.min(midpoint, 1), 0);
+    colorObj.rgb.red = self.mid( colorA.rgb.red, colorB.rgb.red, midpoint );
+    colorObj.rgb.green = self.mid( colorA.rgb.green, colorB.rgb.green, midpoint );
+    colorObj.rgb.blue = self.mid( colorA.rgb.blue, colorB.rgb.blue, midpoint );
+    return colorObj;
+},
+//Return value between a & b based on leverage.
+mid : function(a,b,leverage){
+   return a*leverage + b*(1-leverage);
+}
+
+//another f
+
+})
+
+
+

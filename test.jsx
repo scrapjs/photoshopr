@@ -24,3 +24,5 @@
 // - Gradient fill alone commented
 // - Gradient fill as a component
 // - Gradient fill commented
+
+// - Gradient fill opacity soft light + color overlay opacity + gradient overlay opacity

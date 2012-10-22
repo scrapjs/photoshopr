@@ -2,15 +2,53 @@
 $.writeln("====================")
 //Debug functions - logs to console all properties & their types of @param actionDescriptor
 var showDescriptor = function(actionDescriptor){
+    $.writeln("-------------ActionDescriptor");
     for (var i = actionDescriptor.count; i--;){    
             var keyId = actionDescriptor.getKey(i), key = t2s(keyId);
-            $.writeln(key + '  :  ' + actionDescriptor.getType(keyId));
+            var val = "Nan";
+            switch (actionDescriptor.getType(keyId)){
+                case DescValueType.INTEGERTYPE:
+                    val = actionDescriptor.getInteger(keyId);
+                    break;
+                case DescValueType.ENUMERATEDTYPE:
+                    val = actionDescriptor.getEnumerationType(keyId);
+                    break;
+                case DescValueType.STRINGTYPE:
+                    val = actionDescriptor.getString(keyId);
+                    break;      
+                case DescValueType.DOUBLETYPE:
+                    val = actionDescriptor.getDouble(keyId);
+                    break;
+            }
+            $.writeln(key + '  :  ' + actionDescriptor.getType(keyId) + ' : ' + val);
         }
 }
+
+var showActionList = function (list){
+    $.writeln("-------------ActionList of type "+list.getType(0));
+    for (var i = list.count; i--;){
+            switch (list.getType(i)){
+                case DescValueType.REFERENCETYPE:
+                    showReference(list.getReference(i));
+                    break;
+            }
+    }
+}
+
+var showReference = function (ref) {
+    $.writeln("---------------ActionReference");
+    log(executeActionGet(ref))
+}
+
 var log = function(arg){
     if (arg instanceof ActionDescriptor) return showDescriptor(arg);    
+    if (arg instanceof ActionList)  return showActionList(arg);
     var obj = arg;
     for (var k in obj.reflect.properties){
+        try{
         $.writeln(obj.reflect.properties[k].name + '\t: ' + obj[obj.reflect.properties[k].name])
+        } catch (err) {
+            $.writeln("Error in " + obj.reflect.properties[k].name)
+         }
     }
 }

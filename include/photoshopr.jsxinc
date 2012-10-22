@@ -118,22 +118,26 @@ Photoshopr.prototype = {
 
 
     //Get active layer property in common case (based on psKey)
-    getActiveLayerProperty : function ( psKey, psType ) {
+    getActiveLayerProperty : function ( psKey ) {
         var ref;
         ref = new ActionReference();
         ref.putProperty( c2t( 'Prpr' ), psKey );
-        ref.putEnumerated( c2t('Lyr '), c2t('Ordn'), c2t('Trgt') );      
-        if( undefined == psType ) {
-          var res = executeActionGet( ref );
-          try {
-          return res.getObjectValue( psKey );
-          } catch (err) {
-              //alert("Background layer has no FX.");
-              return false;
-          }
-        } else {
-            return executeActionGet( ref );
+        ref.putEnumerated( c2t('Lyr '), c2t('Ordn'), c2t('Trgt') );     
+        var res = executeActionGet( ref );
+        try {
+            return res.getObjectValue( psKey );
+        } catch (err) {
+            //alert("Background layer has no FX.");
+            return false;
         }
+    },
+
+    //Get layer descriptor based on reference key in common case
+    getLayerDescriptor : function (key){
+        var ref;
+        ref = new ActionReference();
+        ref.putEnumerated( key, c2t('Ordn'), c2t('Trgt') );
+        return executeActionGet( ref );
     }
 }
 
