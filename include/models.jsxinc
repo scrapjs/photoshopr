@@ -236,10 +236,12 @@ applyGGOverlay : function(gradA, gradB, mode){
 proccessBlend : {
     "normal" : function(ca, cb){
         var c = new Color();
-        c.r(ca.r() * ca.a() + cb.r() * cb.a() * (1 - ca.a()));
-        c.g(ca.g() * ca.a() + cb.g() * cb.a() * (1 - ca.a()));
-        c.b(ca.b() * ca.a() + cb.b() * cb.a() * (1 - ca.a()));
+        //$.writeln(ca.toCSS());
+        //$.writeln(cb.toCSS());
         c.a(ca.a() + cb.a()*(1-ca.a()));
+        c.r( (cb.r() * cb.a() + ca.r() * (1 - cb.a()) * ca.a()) / c.a() );
+        c.g( (cb.g() * cb.a() + ca.g() * (1 - cb.a()) * ca.a()) / c.a() );
+        c.b( (cb.b() * cb.a() + ca.b() * (1 - cb.a()) * ca.a()) / c.a() );
         return c;
     },
     "darken" : function(){

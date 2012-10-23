@@ -639,7 +639,6 @@ extend(P, {
             default: //There is effects layer. IDK what to do here.                    
         };    
         self.parseFx();
-        log(self.cssModel.background)
         //Render whole model
         result += self.renderCSSModel();        
         return result;                
