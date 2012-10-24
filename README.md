@@ -1,8 +1,8 @@
-# Photoshop extension that makes possible to convert layer style to CSS
+# Photoshop extension that makes possible to convert layer style/font properties to CSS
 ## Features
 * - Drop-shadow, outer-glow, inner-shadow, inner-glow effects as box-shadow
 * - Gradient overlay, color overlay & layer fill **merged to one backgorund** or as multiple-background
-* - Character & paragraph properties of text layer as font properties
+* Character & paragraph properties of text layer as font properties
 * - Path as SVG in background
 * - Size & border-radius
 * - Texture overlay as data-URI
@@ -24,4 +24,3 @@ MIT
 
 ## TODO
 * - settings confine
-* - paragraph & character to text
