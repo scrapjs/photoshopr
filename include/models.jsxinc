@@ -13,14 +13,15 @@ GetSetOptions = {
 var Gradient = function(o){
     return this._init(o);
 }    
-extend(Gradient.prototype = {
+Gradient.prototype =extend({}, {
     options: {
         type: "linear", //radial, linear, reflected
         steps: [], //{location, color}
         angle: 0, //in deg
-        opacity: 100,
+        opacity: 100, //resilting opacity of gradient, applied after color opacities
         LOCATION_RANGE:100,
-        comment: "" //To insert in css rendering
+        comment: "", //To insert in css rendering
+        mode: "normal" //mode to mix gradient in
     },
     _init: function(o){
         var self = this;
@@ -300,8 +301,6 @@ proccessBlend : {
     }
 },
     
-
-
 //Return color between A & B
 getMidColor : function (colorA, colorB, midpoint) {
      var self = this,

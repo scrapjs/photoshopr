@@ -1,41 +1,27 @@
-Copy Layer FX as CSS3 in one click
-============================================================
-<h2>Features</h2>
-//TODO: make site description & donate
-//TODO: make text properties
+# Photoshop extension that makes possible to convert layer style to CSS
+## Features
+* - Drop-shadow, outer-glow, inner-shadow, inner-glow effects as box-shadow
+* - Gradient overlay, color overlay & layer fill **merged to one backgorund** or as multiple-background
+* - Character & paragraph properties of text layer as font properties
+* - Path as SVG in background
+* - Size & border-radius
+* - Texture overlay as data-URI
+* - Optional browser prefixes
+* - Stroke FX either as a border, outline or box-shadow
+* - Copy layer style as CSS to clipboard
+* - Color formats: rgba, hsla, hex
+* - Popup with style on hotkey
+* - Bevel & Emboss emulation
 
-//TODO: do sizes or text props
+## Usage
+1. Install `Photoshopr.exp` as extension
+2. Open _Window → Extensions → Photoshopr_
+3. Select layer and copy it's style. Resulting CSS will be placed to the clipboard.
+4. Paste style into your IDE, editor or even web-inspector.
 
-//TODO: take into account overlay modes of color, gradient overlay
-//TODO: take into account opacity & fill
+## License
+MIT
 
-//TODO: PRIORITY: do interface;
-
-//TODO: make 2 & more layers combining effects
-    
-//TODO: bevel & emboss
-//TODO: make analysis of gradient fill layer, pattern fill layer & solid color fill layer instead returning
-<ul>
-	<li>Generation of CSS3 box-shadow rule based on drop-shadow, outer-glow, inner-shadow, inner-glow properties;</li>
-	<li>Copy stroke properties optional either as a border, outline or box-shadow;</li>
-	<li>[pending]Gradient overlay, color overlay & layer fill as multiple background;</li>
-	<li>[pending UI] Optional browser prefixes;</li>
-	<li>[Text-layer method pending] Command "Copy Layer Style" copies CSS string to clipboard;</li>
-	<li>[pending UI] Optional color formats: rgba, hsla, hex; </li>
-	<li>[pending] Texture overlay as data-URI;</li>
-	<li>[pending] Detection of round corners;</li>
-	<li>[pending] Correct sizing of element;</li>
-	<li>[pending] Text-shadow;</li>
-	<li>[pending] Popup with style on hotkey;</li>
-	<li>[pending] Text & paragraph properties;</li>
-	<li>[pending] 2 or more layers combining effects;</li>
-</ul>
-
-<h2>Usage</h2>
-<ul>
-	<li>To install drop layerFxToCss.jsx to %PHOTOSHOP_FOLDER%/Presets/Scripts and run it once.</li>
-	<li>To use just copy layer style, a resulting css will be placed to the clipboard. Then paste style into your IDE, editor or even chrome web-inspector.</li>
-	<li>To change settings go to File→Scripts→Photoshopr. </li>
-</ul>
-
-<p>Licensed under MIT.</p>
+## TODO
+* - settings confine
+* - paragraph & character to text

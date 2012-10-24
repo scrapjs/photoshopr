@@ -22,11 +22,60 @@ extend(P, {
         'font-variant':null,
         'text-transform':null,
         'text-align':'left',
+        'text-align-last':null,
         'text-indent':null,
-        'padding':null
+        'padding':null,
+        'opacity':1,
+        'transform':[]
     },
 
-    /*==============================================Parsing model=============*/
+    /*==============================================Parsing==================================*/
+    //Main parse function: parses ill in accordance with type of selected layer
+    parseCSSModel: function(){     
+        var self = this, o = self.settings;
+        //try to get active layer properties
+        try {
+            self.layer = app.activeDocument.activeLayer;
+            if (!self.layer) {
+                return '/*No layer selected*/'
+            }
+            self.lFX = self.getActiveLayerProperty( c2t( 'Lefx' ) );
+            if (!self.lFX) {
+                result += '/*No FX found*/\n'
+            }; //FX not found
+        } catch (err) {
+            //No document opened or active layer selected
+           alert("Something gone wrong when tried to parse FX of active layer.");
+           return '';
+        }
+        self.lKind = self.layer.kind,
+        self.lOpacity,
+        self.lFill,
+        self.lMode,
+        self.lVisible,
+        self.lText,
+        self.lShape;               
+        switch (self.lKind){
+            case LayerKind.SOLIDFILL:
+                self.parseSolidFill();
+                break;
+            case LayerKind.GRADIENTFILL:                
+                self.parseGradientFill();
+                break;
+            case LayerKind.TEXT:
+                if (o.textProperties) self.parseText();
+                break;
+            case LayerKind.NORMAL:
+            case LayerKind.PATTERNFILL:
+                self.parseBMP();
+            default: //There is effects layer. IDK what to do here.                    
+        };
+        self.parseSize();
+        if (self.lFX) self.parseFx();
+        self.parseOpacity();      
+        return self;        
+    },
+
     //Makes model based on FX
     parseFx : function(){
         var self = this;
@@ -58,20 +107,134 @@ extend(P, {
         catch (err) {$.writeln("I Can't grab solid fill color in parseSolidFill")}
         return self;
     },
+    
+    //Just defines an opacity of layer that will be applied to css
+    parseOpacity : function(){
+        var self = this, l = self.layer;
+        self.cssModel.opacity = l.opacity/100;
+        return self;
+    },
 
+    //Parse size, bounds only
+    parseSize : function(){
+        var self = this, l = self.layer;
+        self.cssModel['width'] = 20;
+    },
 
      //Make model of gradient-fill-layer properties
     parseGradientFill : function(){
     },
 
 
-    //Fill model of character properties
-    parseCharacter : function(){
-    },
-
-
-    //Parse paragraph properties
-    parseParagraph: function(){
+    //Fill model of character & paragraph properties
+    parseText : function(){
+        var self = this, l = self.layer, o = self.settings;
+        var textObj = l.textItem;
+        //log (textObj);
+        /*//Alternate, raw way of getting text properties
+            var desc = self.getLayerDescriptor(s2t( "textLayer" ))
+            log(desc.getObjectValue(s2t("textKey")))*/
+        self.cssModel['color'] = new Color({color: textObj.color});
+        //TODO: check auto-leading, auto kerning, antialias method
+        self.cssModel['font-size'] = textObj.size;
+        //TODO: auto-leading amount
+        self.cssModel['letter-spacing'] = parseInt(textObj.tracking)*.001 + 'em';
+        self.cssModel['transform'].push({
+            type: "scale",
+            y: textObj.verticalScale * .01,
+            x: textObj.horizontalScale * .01
+        });
+        //TODO: baseline shift, contents
+        self.cssModel['line-height'] = textObj.leading;
+        //TODO: auto-leading, ligatures, altligatures
+        //TODO: what is old-style? - it's king of open type properties
+        //TODO: vertical direction        
+        //TODO: FONT WEIGHT IS HERE
+        //TODO: Faux bold, faux italic
+        try {
+            var font = app.fonts.getByName(textObj.font);
+            log(font);
+            self.cssModel['font-family'] = font.family;            
+            //TODO: parsing of weight & style
+            var fontWeights = {
+                "lighter" : "light, thin, ultrathin",
+                //{"normal" : "medium, normal, regular".split(", ")},
+                "bold" : "bold, semibold, demibold",
+                "bolder" : "black, ultrabold"
+            };
+            var fontStyles = {"italic" : "slanted, italic, oblique"};
+            var fontStyleTokens = font.style.toLowerCase().split(' ');    
+            for (var i = fontStyleTokens.length; i--;){
+                for (var weight in fontWeights){
+                    if (fontWeights[weight].indexOf(fontStyleTokens[i]) >= 0){
+                        self.cssModel['font-weight'] = weight;
+                        break;
+                    }
+                }
+            };
+            for (var i = fontStyleTokens.length; i--;){
+                for (var style in fontStyles){
+                    if (fontStyles[style].indexOf(fontStyleTokens[i]) >= 0){
+                        self.cssModel['font-style'] = style;
+                        break;
+                    }
+                }
+            }
+            if (textObj.fauxBold){ 
+                self.cssModel['font-weight'] = "bolder";
+            }
+        } catch (err) {
+            self.cssModel['font-family'] = textObj.font + " /*Font is not found*/";
+        }
+        if (textObj.capitalization == TextCase.SMALLCAPS) {
+            self.cssModel['font-variant'] = "small-caps";
+        } else if (textObj.capitalization == TextCase.ALLCAPS){
+            self.cssModel['text-transform'] = "uppercase"
+        }
+        //TODO: understand types of strikethrough
+        if (textObj.strikeThru != StrikeThruType.STRIKEOFF){
+            self.cssModel['text-decoration'] = "line-through";
+        }
+        if (textObj.underline != UnderlineType.UNDERLINEOFF){
+            self.cssModel['text-decoration'] += " underline"
+        }
+        //TODO: language
+        //TODO: nobreak
+        switch (textObj.justification){
+            case Justification.CENTER:
+                self.cssModel['text-align'] = "center"
+                break;
+            case Justification.RIGHT:
+                self.cssModel['text-align'] = "right"
+                break;
+            case Justification.LEFTJUSTIFIED:
+            case Justification.RIGHTJUSTIFIED:
+            case Justification.CENTERJUSTIFIED:
+            case Justification.FULLYJUSTIFIED:
+                self.cssModel['text-align'] = "justify"
+            case Justification.RIGHTJUSTIFIED:
+                self.cssModel['text-align-last'] = "right";
+            case Justification.CENTERJUSTIFIED:
+                self.cssModel['text-align-last'] = "center";
+            case Justification.FULLYJUSTIFIED:
+                self.cssModel['text-align-last'] = "justify";
+                break;
+        };
+        self.cssModel['text-indent'] = parseInt(textObj.firstLineIndent) && textObj.firstLineIndent;
+        //Special paragraph properties
+        if (textObj.kind == TextType.PARAGRAPHTEXT){
+            self.cssModel['padding-left'] = parseInt(textObj.leftIndent) && textObj.leftIndent;
+            self.cssModel['padding-right'] = parseInt(textObj.rightIndent) && textObj.rightIndent;
+            self.cssModel['padding-top'] = parseInt(textObj.leftIndent) && textObj.leftIndent;
+            self.cssModel['padding-bottom'] = parseInt(textObj.leftIndent) && textObj.leftIndent;
+            //TODO: width, height
+        }
+        //TODO:handing punctuation
+        //TODO:text composer on paragraph element
+        //TODO:hyphenation & hyphenation properties
+        //TODO:glyph scalings, letter scalings, word scalings
+        //TODO:warp properties        
+        return self;
     },
 
     
@@ -105,22 +268,22 @@ extend(P, {
             var blurStroke = self.getBlurStroke(blur, spread);
             if (self.lKind == LayerKind.TEXT){
                 shadow = new Shadow({
-                isTextShadow: true,
-                x: getX(angle, distance),
-                y: getY(angle, distance),
-                blur: blurStroke.blur + blurStroke.stroke,
-                color: color
+                    isTextShadow: true,
+                    x: getX(angle, distance),
+                    y: getY(angle, distance),
+                    blur: blurStroke.blur + blurStroke.stroke,
+                    color: color
                 });
                 cssModel['text-shadow'].push(shadow);
             } else {
                 shadow = new Shadow({
-                isTextShadow: false,
-                x: getX(angle, distance),
-                y: getY(angle, distance),
-                blur: blurStroke.blur,
-                stroke: blurStroke.stroke,
-                mode: mode,
-                opacity: opacuty
+                    isTextShadow: false,
+                    x: getX(angle, distance),
+                    y: getY(angle, distance),
+                    blur: blurStroke.blur,
+                    stroke: blurStroke.stroke,
+                    mode: mode,
+                    opacity: opacuty
                 });
                 cssModel['box-shadow'].push(shadow);
             }
@@ -288,6 +451,7 @@ extend(P, {
 
     //Gradient overlay of layer
         "gradientFill": function(fxProp){
+            $.writeln("Inside gradient overlay");
             var styleValue = "",
             gradient = fxProp.getObjectValue(s2t('gradient')),
             enabled = fxProp.getBoolean(s2t('enabled')),
@@ -300,9 +464,12 @@ extend(P, {
             offset = fxProp.getObjectValue(s2t('offset'));
             if(!enabled) return;    
             var mode = fxProp.getEnumerationValue(s2t("mode"));
-            if (t2s(mode) != "normal") {
-                if (settings.showConfirms && !confirm("Gradient Overlay is in "+t2s(mode)+" mode. Now supported only normal mode. Copy as normal?")) return "";            
-            }
+            
+            var grad = new Gradient({
+                mode: mode,
+                opacity: opacity,
+                
+            })
             
             //showObject (gradient)
             gradientForm = gradient.getEnumerationValue(s2t('gradientForm'));
@@ -467,10 +634,13 @@ extend(P, {
     /*=====================================================Rendering===============================================*/
     //Returns string from css model through all properties
     renderCSSModel : function(){
-        var self = this, cssStr = "";    
+        var self = this, cssStr = "", css = self.cssModel, 
         c = P.settings.comments;        
         cssStr += self.renderBackground();
         cssStr += self.renderShadows();
+        if (css['opacity'] != 1) cssStr += "opacity: " + (self.cssModel.opacity).toFixed(2).slice(1) + ";\n";
+        cssStr += self.renderSize();
+        if (self.lKind == LayerKind.TEXT) cssStr += self.renderText();
         return cssStr;
     },
     
@@ -535,28 +705,55 @@ extend(P, {
     //Returns css shadows string in accordance to cssModel: text-shadow, background-shadow. 
     renderShadows: function(){
         var self = this, o = self.settings, result = "";
+        
         return result;
     },
     
     
     //deprecated render for the text layer 
-    renderTextLayer : function(css){
+    renderText : function(){
+        var self = this, result = "", css = self.cssModel, o = self.settings;
         //Text-shadow
         var textShadow = "";
         if (css['text-outer-glow']) textShadow += css['text-outer-glow'] + (c?' /*outer-glow*/':'') + ',' + delim;
         if (css['text-drop-shadow']) textShadow += css['text-drop-shadow'] + (c?' /*drop-shadow*/':'') + ',' + delim;
         if (textShadow) textShadow = 'text-shadow:' + delim + textShadow.substr (0, textShadow.length-2) + ';\n';
+        result += textShadow;
+                
+        if(css['color']) result += "color: " + css['color'].toCSS() + (o.comments ? "; /* Text color */\n" : ";\n");
+        if(css['text-decoration']) result += "text-decoration: " + css['text-decoration'] + ";\n";
+        if(css['letter-spacing']) result += "letter-spacing: " + css['letter-spacing'] + ";" + (o.comments ? " /* Tracking */\n" : "\n");
+        result += "font-family: \"" + css['font-family'] + "\"" + ";\n";
+        result += "font-size: " + css['font-size'].value + css['font-size'].type + ";\n";
+        result += "line-height: " + css['line-height'].value + css['line-height'].type + ";\n";
+        if (css['font-weight']) result += "font-weight: " + css['font-weight'] + ";\n";
+        if (css['font-style']) result += "font-style: " + css['font-style'] + ";\n";
+        if (css['font-variant']) result += "font-variant: " + css['font-variant'] + ";\n";
+        if (css['text-transform']) result += "text-transform: " + css['text-transform'] + ";\n";
+        if (css['text-align']) result += "text-align: " + css['text-align'] + ";\n";
+        if(css['text-align-last']) result += "text-align-last: " + css['text-align-last'] + ";\n";
+        if (css['text-indent']) result += "text-indent: " + css['text-indent'] + ";\n";
         
-        //Text-color
-        var fillColor = ""
-        if (css['color-overlay']) fillColor += getColor(css['color-overlay'])    
-        
-        //Text-properties
-        
-        
-        return textShadow;
+        return result;
     },
 
+    //Sizes & paragraph paddings, if neccessary
+    //TODO: make correct size rendering
+    renderSize : function(){
+        var result = "", self = this, o = self.settings, css = self.cssModel;        
+        /*if (self.lKind == LayerKind.TEXT && self.textItem.kind == TextType.PARAGRAPHTEXT ){
+            //Paragraph has sizes inside TextItem. Besides, it has paddings.
+            var padding = "";
+            if(css['padding-top']) {
+                if (css['padding-top'] == css['padding-bottom']){
+                }
+            }
+        } else if (true){
+            //Otherwise supposed that we have a vector mask
+        }*/
+    
+        return result;        
+    },
 
     //deprecated render fill layer = gradient, solid fill
     renderFillLayer : function(css) {
@@ -596,51 +793,14 @@ extend(P, {
         
         return cssStr;
     },
-
-   
-    //Main function - returns CSS string with rendered result
+    
+      
+    //==============================Main function - returns CSS string with rendered result
     getLayerCss : function(){
         var self = this, o = self.settings, 
         result = "";
-        //try to get active layer properties
-        try {
-            self.layer = app.activeDocument.activeLayer;
-            if (!self.layer) { return '/*No layer selected*/'}
-            self.lFX = self.getActiveLayerProperty( c2t( 'Lefx' ) );
-            if (!self.lFX) { return '/*Background layer has no FX*/'}; //FX not found
-        } catch (err) {
-            //No document opened or active layer selected
-           alert("Something has broken when tried to find FX of layer.");
-           return '';
-           // return "";
-        }
-        self.lKind = self.layer.kind,
-        self.lOpacity,
-        self.lFill,
-        self.lMode,
-        self.lVisible,
-        self.lText,
-        self.lShape;        
-        //Make model
-        switch (self.lKind){
-            case LayerKind.SOLIDFILL:
-                self.parseSolidFill();
-                break;
-            case LayerKind.GRADIENTFILL:                
-                self.parseGradientFill();
-                break;
-            case LayerKind.TEXT:
-                if (o.characterProperties) self.parseCharacter();
-                if (o.paragraphProperties) self.parseParagraph();
-                break;
-            case LayerKind.NORMAL:
-            case LayerKind.PATTERNFILL:
-                self.parseBMP();
-            default: //There is effects layer. IDK what to do here.                    
-        };    
-        self.parseFx();
-        //Render whole model
-        result += self.renderCSSModel();        
+        self.parseCSSModel();
+        result += self.renderCSSModel();
         return result;                
     }
 

@@ -26,3 +26,5 @@
 // - Gradient fill commented
 
 // - Gradient fill opacity soft light + color overlay opacity + gradient overlay opacity
+
+// - Box-shadows all

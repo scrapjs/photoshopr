@@ -12,12 +12,12 @@ Photoshopr.prototype = {
         showPrefixes : false,
         colorFormat : 'rgb', //rgb, hsl, hex
         wrapLines: false,
-        comments: true,
-        strokeType: 'box-shadow', //'box-shadow', 'border', 'outline'
-        characterProperties: false,
-        paragraphProperties: true,
-        sizes: false, //to do or not sizes of element
-        mergeBackground: true
+        comments: false,
+        strokeType: 'box-shadow', //'box-shadow', 'border'
+        textProperties: true, //do text layers
+        mergeBackground: true,
+        bindToCopyFx: true, //Copy css to clipboard or not when copying layer style
+        showResultDialog: false //Show dialog with result or not
     },
 
 
@@ -27,6 +27,8 @@ Photoshopr.prototype = {
         self.tempFolder = Folder.temp.fsName; //folderForTempFiles
         self.loadSettings();
         self.DELIM = o.wrapLines ? "\n" : " ";
+        
+        app.preferences.exportClipboard = true;
         return self;
     },
     

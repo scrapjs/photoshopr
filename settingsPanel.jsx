@@ -5,8 +5,6 @@
 #include "include/debug.jsxinc"
 #include "./include/photoshopr.jsxinc"
 
-var a = {b:1, c:2};
-
 var P = photoshopr; //alias
 
 var d = 8, h = d*3, lh = d*3, w1 = d*29, pl = d, pt = d+d/2, pr = d, pb = d, 
