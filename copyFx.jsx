@@ -7,9 +7,9 @@
 #include "include/photoshopr.jsxinc"
 #include "include/getLayerCss.jsxinc"
 
+log(photoshopr.settings)
 var cssStr = photoshopr.getLayerCss();
 $.writeln("--------------result")
-//photoshopr.resetSettings();
 $.writeln(cssStr)
 /*$.writeln( t2s(c2t("T   ")) )
 $.writeln( t2s(c2t("Clr ")) )

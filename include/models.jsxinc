@@ -198,10 +198,29 @@ extend(Shadow.prototype,{
     toCSS: function(){
         var self = this, o =this.options;
         var result = "";
-        result += o.x+"px " + o.y + "px " + o.blur + "px " + (o.isTextShadow?(o.spread+"px "):"") + o.color.toCSS();
+        result += (o.inset?"inset ":"") + o.x+"px " + o.y + "px " + Math.round(o.blur) + "px " + (!o.isTextShadow&&o.stroke?(o.stroke+"px "):"") + o.color.toCSS();
         o.comment && (result += " /*" + o.comment + "*/");
         return result;
+    },
+    //Photoshop helper that sets blur & stroke from blur & spread
+    blurSpread: function(blur, spread){
+        var self = this, o = self.options;
+        var stroke = Math.round(spread*0.01*blur);
+        if (o.isTextShadow){
+            extend(o,{stroke:stroke, blur:blur + stroke});
+        } else {
+            extend(o,{stroke:stroke, blur:blur - stroke});
+        }
+        return self;
+    },
+
+    //Convert dist & angle to x & y, set them to the model
+    angleDistance: function(angle, distance){
+        var self = this, o = self.options;
+        o.x = Math.round(distance * -Math.cos(angle/180*Math.PI));
+        o.y = Math.round(distance * Math.sin(angle/180*Math.PI));
     }
+    
 }, GetSetOptions)
 
 

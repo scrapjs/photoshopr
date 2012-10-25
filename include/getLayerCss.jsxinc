@@ -28,10 +28,9 @@ extend(P, {
         'opacity':1,
         'transform':[]
     },
-
-    /*==============================================Parsing==================================*/
-    //Main parse function: parses ill in accordance with type of selected layer
-    parseCSSModel: function(){     
+    
+    //Fill model with properties
+    _initActiveLayer: function(){
         var self = this, o = self.settings;
         //try to get active layer properties
         try {
@@ -55,6 +54,14 @@ extend(P, {
         self.lVisible,
         self.lText,
         self.lShape;               
+        return self;
+    },
+    
+    
+    /*==============================================Parsing==================================*/
+    //Main parse function: parses everything in accordance with type of selected layer
+    parseCSSModel: function(){     
+        var self = this, o = self.settings;
         switch (self.lKind){
             case LayerKind.SOLIDFILL:
                 self.parseSolidFill();
@@ -83,11 +90,12 @@ extend(P, {
                 var key = self.lFX.getKey(i), fxprop;            
                 try {
                     var fxprop = self.lFX.getObjectValue(key); //Get FX Object
-                    //$.writeln(t2s(key));
-                    self.proccessFx[t2s(key)] && self.proccessFx[t2s(key)](fxprop);            
                 } catch (err) {
+                    continue;
                     //$.writeln("I can't get layer fx. I'm sorry.");
-                }       
+                }   
+                //$.writeln(t2s(key));
+                self.proccessFx[t2s(key)] && self.proccessFx[t2s(key)](fxprop);
         }
     },
 
@@ -246,6 +254,7 @@ extend(P, {
     //Object with processing funcs of different layer properties. Every function gets p.cssModel filled.
     proccessFx : {
         "dropShadow" : function(fxProp){
+            var self = P, o = self.settings;
             var shadow,
             enabled = fxProp.getBoolean(s2t("enabled")), 
             colorRef = fxProp.getObjectValue(s2t("color")), 
@@ -255,76 +264,50 @@ extend(P, {
             distance = fxProp.getUnitDoubleValue(s2t("distance")), 
             spread = fxProp.getUnitDoubleValue(s2t("chokeMatte")), 
             blur = fxProp.getUnitDoubleValue(s2t("blur"));   
-            var color = SolidColor.create(colorRef);
-            color.options.opacity = opacity;
             if (!enabled) return;
             var mode = fxProp.getEnumerationValue(s2t("mode"));
+            var color = Color.create(colorRef, { opacity : opacity, mode: t2s(mode)});
+            color.set("mode", mode);
             //get global light angle
             if (useGlobalAngle) {
                 var ref = new ActionReference();
                 ref.putEnumerated( c2t("Lyr "), c2t("Ordn"), c2t("Trgt") ); 
                 angle = executeActionGet(ref).getInteger(s2t('globalAngle'));
             }        
-            var blurStroke = self.getBlurStroke(blur, spread);
-            if (self.lKind == LayerKind.TEXT){
-                shadow = new Shadow({
-                    isTextShadow: true,
-                    x: getX(angle, distance),
-                    y: getY(angle, distance),
-                    blur: blurStroke.blur + blurStroke.stroke,
-                    color: color
-                });
-                cssModel['text-shadow'].push(shadow);
-            } else {
-                shadow = new Shadow({
-                    isTextShadow: false,
-                    x: getX(angle, distance),
-                    y: getY(angle, distance),
-                    blur: blurStroke.blur,
-                    stroke: blurStroke.stroke,
-                    mode: mode,
-                    opacity: opacuty
-                });
-                cssModel['box-shadow'].push(shadow);
-            }
+            shadow = new Shadow({
+                color: color
+            });  
+            shadow.angleDistance(angle, distance);
+            shadow.set("isTextShadow", self.lKind == LayerKind.TEXT);            
+            shadow.blurSpread(blur, spread);   
+            if (o.comments) shadow.set("comment", "Drop shadow");
+            if (!shadow.get("isTextShadow")) self.cssModel['box-shadow'][0] = shadow;
+            else self.cssModel['text-shadow'][0] = shadow;
         },
 
         "outerGlow" : function(fxProp){//TODO: take into account all glowing options
+            var self = P, o = self.settings;
             var enabled = fxProp.getBoolean(s2t("enabled")), 
-            color = fxProp.getObjectValue(s2t("color")), 
+            colorRef = fxProp.getObjectValue(s2t("color")), 
             opacity = fxProp.getUnitDoubleValue(s2t("opacity")), 
             spread = fxProp.getUnitDoubleValue(s2t("chokeMatte")), 
             blur = fxProp.getUnitDoubleValue(s2t("blur"));
             if (!enabled) return; 
             var mode = fxProp.getEnumerationValue(s2t("mode"));
-            var blurStroke = getBlurStroke(blur, spread);
-            if (lKind == LayerKind.TEXT){
-                shadow = new Shadow({
-                    isTextShadow: true,
-                    x: getX(angle, distance),
-                    y: getY(angle, distance),
-                    blur: blurStroke.blur + blurStroke.stroke,
-                    mode: mode,
-                    opacity: opacuty
-                });
-                cssModel['text-shadow'].push(shadow);
-            } else {
-                shadow = new Shadow({
-                    isTextShadow: false,
-                    x: 0,
-                    y: 0,
-                    blur: blurStroke.blur,
-                    stroke: blurStroke.stroke,
-                    mode: mode,
-                    opacity: opacuty
-                });
-                cssModel['box-shadow'].push(shadow);
-            }
+            var color = Color.create(colorRef, {opacity:opacity, mode: t2s(mode)});
+            var shadow = new Shadow({color: color});
+            shadow.set("isTextShadow", self.lKind == LayerKind.TEXT);        
+            if (o.comments) shadow.set("comment", "Outer glow");    
+            shadow.blurSpread(blur, spread);            
+            if (!shadow.get("isTextShadow")) self.cssModel['box-shadow'][1] = shadow;
+            else self.cssModel['text-shadow'][1] = shadow;
+            
         },
 
         "innerShadow" : function(fxProp){
+            var self = P, o = self.settings;
             var enabled = fxProp.getBoolean(s2t("enabled")),
-            color = fxProp.getObjectValue(s2t("color")), 
+            colorRef = fxProp.getObjectValue(s2t("color")), 
             opacity = fxProp.getUnitDoubleValue(s2t("opacity")), 
             spread = fxProp.getUnitDoubleValue(s2t("chokeMatte")), 
             blur = fxProp.getUnitDoubleValue(s2t("blur")),
@@ -332,57 +315,40 @@ extend(P, {
             angle = fxProp.getUnitDoubleValue(s2t("localLightingAngle")),
             distance = fxProp.getUnitDoubleValue(s2t("distance"));        
             if (!enabled) return;    
-            var mode = fxProp.getEnumerationValue(s2t("mode"));
-            if (lKind != LayerKind.TEXT) return; //TODO: maybe somewhen make text inner shadow
-            //get global light angle
             if (useGlobalAngle) {
                 var ref = new ActionReference();
                 ref.putEnumerated( c2t("Lyr "), c2t("Ordn"), c2t("Trgt") ); 
                 angle = executeActionGet(ref).getInteger(s2t('globalAngle'));
             }
-            var blurStroke = getBlurStroke(blur, spread);
-            if (lKind != LayerKind.TEXT){
-                shadow = new Shadow({
-                    isTextShadow: false,
-                    inset: true,
-                    x: getX(angle, distance),
-                    y: getY(angle, distance),
-                    blur: blurStroke.blur,
-                    stroke: blurStroke.stroke,
-                    mode: mode,
-                    opacity: opacuty
-                });
-                cssModel['box-shadow'].push(shadow);
-            } else {
-            };
+            var mode = fxProp.getEnumerationValue(s2t("mode"));
+            var color = Color.create(colorRef, {opacity:opacity, mode: t2s(mode)});
+            var shadow = new Shadow({color: color, inset: true});
+            shadow.set("isTextShadow", self.lKind == LayerKind.TEXT); 
+            if (o.comments) shadow.set("comment", "Inner shadow");           
+            shadow.blurSpread(blur, spread);        
+            shadow.angleDistance(angle, distance);    
+            if (!shadow.get("isTextShadow")) self.cssModel['box-shadow'][3] = shadow;
+            else self.cssModel['text-shadow'][3] = shadow;
         },
 
         "innerGlow" : function(fxProp){//TODO: take into account all glowing options
+            var self = P, o = self.settings;
             var styleValue = "", //resulting style
             enabled = fxProp.getBoolean(s2t("enabled")), 
             mode, //TODO: take into account
-            color = fxProp.getObjectValue(s2t("color")), 
+            colorRef = fxProp.getObjectValue(s2t("color")), 
             opacity = fxProp.getUnitDoubleValue(s2t("opacity")), 
             spread = fxProp.getUnitDoubleValue(s2t("chokeMatte")), 
             blur = fxProp.getUnitDoubleValue(s2t("blur"));
             if (!enabled) return;      
             var mode = fxProp.getEnumerationValue(s2t("mode"));
-            var blurStroke = getBlurStroke(blur, spread);
-            if (lKind != LayerKind.TEXT){
-                shadow = new Shadow({
-                    isTextShadow: false,
-                    inset: true,
-                    x: 0,
-                    y: 0,
-                    blur: blurStroke.blur,
-                    stroke: blurStroke.stroke,
-                    mode: mode,
-                    opacity: opacuty
-                });
-                cssModel['box-shadow'].push(shadow);
-            } else {
-            }
-            return styleValue;
+            var color = Color.create(colorRef, {opacity:opacity, mode: t2s(mode)});
+            var shadow = new Shadow({color: color, inset: true});
+            shadow.set("isTextShadow", self.lKind == LayerKind.TEXT); 
+            if (o.comments) shadow.set("comment", "Inner glow");           
+            shadow.blurSpread(blur, spread);    
+            if (!shadow.get("isTextShadow")) self.cssModel['box-shadow'][2] = shadow;
+            else self.cssModel['text-shadow'][2] = shadow;
         },
         
         //Stroke
@@ -604,32 +570,8 @@ extend(P, {
         return result;    
     },
 
-    //Returns css blur & stroke representation in pixels of photoshop blur & stroke 
-    getBlurStroke : function(blur, spread){
-        return {blur:spread*0.01*blur, stroke:blur - stroke};
-    },
-
-    //Returns css blur w/o stroke. Blur is calculated to overlap 
-    getBlurOnly : function(blur, spread){
-        var stroke = spread*0.01*blur;
-        var cssBlur = blur + stroke*.5;
-        cssBlur = cssBlur ? (cssBlur.toFixed(0) + "px ") : "0 ";
-        return cssBlur;
-    },
-
-    //Returns css x in pixels 
-    getX : function(angle, distance){
-        return Math.round(distance * -Math.cos(angle/180*Math.PI));
-    },
-
-
-    //Returns y css  in pixels
-    getY : function(angle, distance){
-        return Math.round(distance * Math.sin(angle/180*Math.PI));
-    },
-
-
-
+    
+    
 
     /*=====================================================Rendering===============================================*/
     //Returns string from css model through all properties
@@ -637,7 +579,7 @@ extend(P, {
         var self = this, cssStr = "", css = self.cssModel, 
         c = P.settings.comments;        
         cssStr += self.renderBackground();
-        cssStr += self.renderShadows();
+        cssStr += self.renderBoxShadows();
         if (css['opacity'] != 1) cssStr += "opacity: " + (self.cssModel.opacity).toFixed(2).slice(1) + ";\n";
         cssStr += self.renderSize();
         if (self.lKind == LayerKind.TEXT) cssStr += self.renderText();
@@ -702,15 +644,32 @@ extend(P, {
     },
 
 
-    //Returns css shadows string in accordance to cssModel: text-shadow, background-shadow. 
-    renderShadows: function(){
-        var self = this, o = self.settings, result = "";
+    //Returns css box shadows 
+    renderBoxShadows: function(){
+        var self = this, o = self.settings, css = self.cssModel,  result = "";
+        if (o.showPrefixes){
+            for (var i =  self.prefixes.length; i--;){
+                result += self.renderBoxShadow(self.prefixes[i]);
+            }
+        }
+        result += self.renderBoxShadow();
         
+        return result;
+    },   
+
+    //Return one box-shadow prefixed
+    renderBoxShadow: function(prefix){
+        var self = this, o = self.settings, css = self.cssModel,  result = "", delim = self.DELIM;
+        prefix = prefix || "";
+        result += prefix + "box-shadow:"+ delim;
+        for (var i = css['box-shadow'].length; i--;){
+            result += css['box-shadow'][i].toCSS() + "," + delim;
+        }
+        result = result.substr (0, result.length-2) + ';\n';
         return result;
     },
     
-    
-    //deprecated render for the text layer 
+    //Render full text properties
     renderText : function(){
         var self = this, result = "", css = self.cssModel, o = self.settings;
         //Text-shadow
@@ -799,6 +758,7 @@ extend(P, {
     getLayerCss : function(){
         var self = this, o = self.settings, 
         result = "";
+        self._initActiveLayer();
         self.parseCSSModel();
         result += self.renderCSSModel();
         return result;                
