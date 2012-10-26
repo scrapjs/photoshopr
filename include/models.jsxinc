@@ -5,7 +5,11 @@ GetSetOptions = {
         return this.options && this.options[name];
     }, 
     set: function(name, value){
+        if (typeof name == "string")
         this.options && (this.options[name] = value);
+        else if (typeof name == "object")
+        extend(this.options, name);
+        return this;
     }
 }
 
@@ -18,31 +22,31 @@ Gradient.prototype =extend({}, {
         type: "linear", //radial, linear, reflected
         steps: [], //{location, color}
         angle: 0, //in deg
-        opacity: 100, //resilting opacity of gradient, applied after color opacities
-        LOCATION_RANGE:100,
-        comment: "", //To insert in css rendering
-        mode: "normal" //mode to mix gradient in
+        opacity: 100, //resulting opacity of gradient, applied after color opacities
+        LOCATION_RANGE:100, //It's supposed location for full element height
+        reversed: false,
+        comment: "" //To insert in css rendering
     },
     _init: function(o){
         var self = this;
         self.options = extend({},self.options, o);
         return self;
     },
-    applyOverlay: function(color, mode){
-    },
     toCSS: function(prefix){
         var self = this, o = self.options,
         result = "";
         prefix = prefix || "";
+        var delim = photoshopr.DELIM;
         //Make type of gradient
         switch (o.type) {
             case "radial":
                 result+= prefix + "radial-gradient(";
                 break;
             default:
+                var angle = o.reversed ? ((o.angle + 180)%360) : o.angle;
                 result+= prefix + "linear-gradient(";
                 //Do direction
-                switch (o.angle){
+                switch (angle){
                     case 90:
                         result += "top, ";
                         break;
@@ -63,16 +67,118 @@ Gradient.prototype =extend({}, {
             }
         //Make steps of gradient
         o.steps.sort(function(a,b){return a.location - b.location});
-        for (var i = 0; i < o.steps; i++){
-            result += o.steps[i].color.applyOpacity(o.opacity).toCSS();
-            result += o.steps[i].location + "%, ";
+        for (var i = 0; i < o.steps.length; i++){
+            result += o.steps[i].color/*.applyOpacity(o.opacity)*/.toCSS();
+            result += " "+o.steps[i].location + "%," + delim;
         }
     result = result.substr (0, result.length-2) + ')';
     o.comment && (result += " /*" + o.comment + "*/");
     return result;
     }
 }, GetSetOptions);
+//Gradient singleton methods
+extend(Gradient,{
+    //Kind of gradient fabric
+    create: function(arg, opts){
+        if (arg instanceof ActionDescriptor) {//create from actiondescriptor of gradient            
+             gradientForm = arg.getEnumerationValue(s2t('gradientForm'));
+            if (t2s(gradientForm) == "colorNoise") return false; //dont fuck with colorNoise gradients            
+            var g = this._createFromRef(arg);
+            g.set(opts);
+            return g;
+        } else { //simple create
+            return new Gradient(arg);
+        }
+    },
 
+    //Technical fabric method
+    _createFromRef: function(gradientRef){
+        var g = new Gradient(), o = g.options;        
+        transpList = gradientRef.getList(s2t('transparency')),
+        colorList = gradientRef.getList(s2t('colors')),
+        iicon = gradientRef.getDouble(s2t('interfaceIconFrameDimmed')); //TODO: whattafuck is this? Do get know    
+        var trans = [], colors = []; //technical arrays
+        
+        //grab all transparents
+        for (var i = transpList.count; i--;){ 
+            var transpObj = transpList.getObjectValue(i),
+            midpoint = transpObj.getInteger(s2t('midpoint')),//0..100, first midpoint  is always 50 
+            location = transpObj.getInteger(s2t('location')),//0..4096
+            opacity = transpObj.getUnitDoubleValue(s2t('opacity'));//0..100
+            trans.push({location:location, opacity:opacity});
+            if (midpoint!=50){//add displacement of midpoint step, if midpoint not 50
+                var prev = transpList.getObjectValue(i-1)||transpObj,
+                prevLocation = prev.getInteger(s2t('location')),
+                prevOpacity = prev.getUnitDoubleValue(s2t('opacity'));
+                trans.push({
+                    location: prevLocation + (location-prevLocation)*midpoint*.01, 
+                    opacity:prevOpacity + (opacity-prevOpacity)*.5
+                })
+            }
+        }  
+        trans.sort(function(a,b){return a.location - b.location});
+        
+        //grab all colors
+        for (var i = 0; i < colorList.count ;i++){ 
+            var colorStep = colorList.getObjectValue(i)
+            midpoint = colorStep.getInteger(s2t('midpoint')),//0..100, first midpoint  is always 50 
+            location = colorStep.getInteger(s2t('location')),//0..4096
+            type = t2s(colorStep.getEnumerationValue(s2t('type'))),//
+            color = Color.create(colorStep.getObjectValue(s2t('color')));
+            colors.push({location:location, color:color});
+            if (midpoint!=50){//add displacement of midpoint step, if midpoint not 50
+                    var prev = colorList.getObjectValue(i-1),//||colorStep,
+                    prevLocation = prev.getInteger(s2t('location')),
+                    prevColor = Color.create(prev.getObjectValue(s2t('color')));
+                    colors.push({
+                        location: prevLocation + (location-prevLocation)*midpoint*0.01, 
+                        color:color.getMix(prevColor)
+                    })
+                }
+        }
+        colors.sort(function(a,b){return a.location - b.location});
+        
+        //Fill o.steps based on colors & transp arrays
+        var lRange = 4096;//location range   
+        var colorStep, transpStep, prevColorStep, prevTranspStep;
+        var stoppr = 120;
+        var mid = Graph.mid;
+        for (var ic = 0, it = 0; ic<colors.length || it < trans.length && stoppr--; ){
+            //$.writeln(stoppr+' : '+(colors[ic] && colors[ic].location)+' : '+(trans[it]&&trans[it].location));        
+            colorStep = colors[ic] || {location : lRange, color : colorStep.color}; //end limiter color
+            prevColorStep = colors[ic-1] || {location : 0, color : colorStep.color}; //start limiter color
+            transpStep = trans[it] || {location : lRange, opacity : transpStep.opacity}; //end limiter transp
+            prevTranspStep = trans[it-1] || {location : 0, opacity : transpStep.opacity}; //start limiter transp            
+            if (Math.abs( colorStep.location - transpStep.location ) < 42) {//colorstep==transparentstep
+                o.steps.push({
+                    location: Math.round(colorStep.location/lRange*o.LOCATION_RANGE),
+                    color: colorStep.color.set("opacity", transpStep.opacity)
+                });
+                it++; ic++;
+            } else if (colorStep.location < transpStep.location){//colorstep
+                o.steps.push({
+                    location: Math.round( colorStep.location/lRange*o.LOCATION_RANGE),
+                    color: colorStep.color
+                    .set("opacity", mid( transpStep.opacity, prevTranspStep.opacity, (colorStep.location - prevTranspStep.location)/(transpStep.location - prevTranspStep.location)))
+                });
+            ic++;
+            } else if (colorStep.location > transpStep.location ) {//transpstep
+                o.steps.push({
+                    location: Math.round(transpStep.location/lRange*o.LOCATION_RANGE),
+                    color: colorStep.color
+                    .getMix(prevColorStep.color, (transpStep.location - prevColorStep.location)/(colorStep.location - prevColorStep.location))
+                    .set("opacity", transpStep.opacity)
+                });
+                it++;
+            } else {
+                $.writeln("Dude, something went wrong in gradient generation: infinite cycling.");
+                ic++; it++
+            }
+        }  
+    
+        return g;    
+    } //end of _createFromRef
+})
 
 
 //Extend color model
@@ -158,12 +264,13 @@ extend(Color.prototype, {
     getMix : function(colorB, midpoint){
         var self = this, colorA = self.options.color,
         colorObj = new SolidColor();
+        if (colorB instanceof Color) colorB = colorB.get("color");
         midpoint = midpoint || .5;
-        midpoint = Graph.max(Graph.min(midpoint, 1), 0);
+        midpoint = Math.max(Math.min(midpoint, 1), 0);
         colorObj.rgb.red = Graph.mid( colorA.rgb.red, colorB.rgb.red, midpoint );
         colorObj.rgb.green = Graph.mid( colorA.rgb.green, colorB.rgb.green, midpoint );
         colorObj.rgb.blue = Graph.mid( colorA.rgb.blue, colorB.rgb.blue, midpoint );
-        return colorObj;
+        return Color.create(colorObj);
     },
     //Makes color opacity
     applyOpacity: function(opacity){
@@ -239,17 +346,17 @@ applyCCOverlay : function(colorA, colorB, mode){
     //Reslt of overlay is a mix of blended top layer and bottom origin layer leveraged by opacity-midpoint.
     return this.proccessBlend[mode](colorA, colorB);
 },
-//gradient over color
-applyGCOverlay : function(grad, color, mode){
-    return grad;
-},
 //color over gradient
-applyCGOverlay : function(color, grad, mode){
+applyGCOverlay : function(grad, color, mode){
     return color;
+},
+//gradient over color
+applyCGOverlay : function(color, grad, mode){
+    return grad;
 },
 //gradient over gradient
 applyGGOverlay : function(gradA, gradB, mode){
-    return gradA
+    return gradB
 },
 
 //Object with blend modes proccessings

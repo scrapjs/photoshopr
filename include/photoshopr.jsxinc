@@ -11,7 +11,7 @@ Photoshopr.prototype = {
     settings : {
         showPrefixes : false,
         colorFormat : 'rgb', //rgb, hsl, hex
-        wrapLines: false,
+        wrapLines: true,
         comments: false,
         strokeType: 'box-shadow', //'box-shadow', 'border'
         textProperties: true, //do text layers

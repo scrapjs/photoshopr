@@ -404,7 +404,7 @@ extend(P, {
 
     //Color overlay
         "solidFill": function(fxProp){
-            $.writeln("inside color overlay")
+            //$.writeln("inside color overlay")
             var enabled = fxProp.getBoolean(s2t('enabled')),
             opacity = fxProp.getUnitDoubleValue(s2t('opacity')),
             mode = fxProp.getEnumerationValue(s2t("mode")),
@@ -417,9 +417,10 @@ extend(P, {
 
     //Gradient overlay of layer
         "gradientFill": function(fxProp){
-            $.writeln("Inside gradient overlay");
+            var self = P, css = P.cssModel, o = P.settings;
+            //$.writeln("Inside gradient overlay");
             var styleValue = "",
-            gradient = fxProp.getObjectValue(s2t('gradient')),
+            gradientRef = fxProp.getObjectValue(s2t('gradient')),
             enabled = fxProp.getBoolean(s2t('enabled')),
             opacity = fxProp.getUnitDoubleValue(s2t('opacity')),
             reverse = fxProp.getBoolean(s2t('reverse')),
@@ -429,148 +430,44 @@ extend(P, {
             scale = fxProp.getUnitDoubleValue(s2t('scale')),
             offset = fxProp.getObjectValue(s2t('offset'));
             if(!enabled) return;    
-            var mode = fxProp.getEnumerationValue(s2t("mode"));
-            
-            var grad = new Gradient({
-                mode: mode,
-                opacity: opacity,
-                
-            })
-            
-            //showObject (gradient)
-            gradientForm = gradient.getEnumerationValue(s2t('gradientForm'));
-            if (t2s(gradientForm) == "colorNoise") return; //dont fuck with colorNoise gradients
-            
-            transparency = gradient.getList(s2t('transparency')),
-            colors = gradient.getList(s2t('colors')),
-            iicon = gradient.getDouble(s2t('interfaceIconFrameDimmed')); //TODO: whattafuck is this? Do get know    
+            var mode = fxProp.getEnumerationValue(s2t("mode"));  
+            var grad = Gradient.create(gradientRef, {
+                opacity: opacity          
+            });
+            if (!grad) return "/* Cannot create gradient */"; //Cannot create gradient
             
             //defining exact size of gradient and render
             var position = "";//TODO: take into account        
             switch(type){
                 case "linear":
                     //do reverse
-                    angle = reverse ? angle : ((angle + 180)%360);
-                    styleValue += getLinearGradient(transparency, colors, angle, opacity);
+                    grad.set({
+                        type: "linear", 
+                        angle: angle,
+                        reversed: reverse
+                        });
                     break;
                 case "radial":
-                    styleValue += getRadialGradient(transparency, colors, angle, opacity);
+                    grad.set("type", "radial");
                     break;
                 case "angle":
                     //Get out
+                    grad.set("type", "angle");
                     break;
                 case "reflected":
                     //do 2 linears
-                    //styleValue += 
+                    grad.set("type", "reflected");
                     break;
                 case "diamond":
                     //Omg gtfo
+                    grad.set("type", "diamond");
                     break;
             }    
-            css['gradient-overlay'] = styleValue;
-            return styleValue;
+            css['background'].push(grad);
         }
 
 
     },
-
-    //Return linear gradient stringified
-    getLinearGradient : function(transpList, colorList,angle, globalOpacity){
-        globalOpacity = globalOpacity || 100; //it's overlay opacity
-        var result = "linear-gradient(";
-        //do color
-        switch (angle){
-            case 90:
-                result += "top, ";
-                break;
-            case -90:
-            case 270:
-            result += "bottom, ";
-            break;
-            case 0:
-            result += "right, ";
-            break;
-            case 180:
-            case -180:
-            result += "left, ";
-            break;
-            default:
-            result += angle + "deg, ";
-        }
-        var colors = [], trans = [];
-        //grab all transparents
-        for (var i = transpList.count; i--;){ 
-            var transpObj = transpList.getObjectValue(i),
-            midpoint = transpObj.getInteger(s2t('midpoint')),//0..100, first midpoint  is always 50 
-            location = transpObj.getInteger(s2t('location')),//0..4096
-            opacity = transpObj.getUnitDoubleValue(s2t('opacity'));//0..100
-            trans.push({location:location, opacity:opacity});
-            if (midpoint!=50){//add displacement of midpoint step, if midpoint not 50
-                var prev = transpList.getObjectValue(i-1)||transpObj,
-                prevLocation = prev.getInteger(s2t('location')),
-                prevOpacity = prev.getUnitDoubleValue(s2t('opacity'));
-                trans.push({
-                    location: prevLocation + (location-prevLocation)*midpoint*.01, 
-                    opacity:prevOpacity + (opacity-prevOpacity)*.5
-                })
-            }
-        } 
-        trans.sort(function(a,b){return a.location - b.location});
-        //grab all colors
-        for (var i = 0; i < colorList.count ;i++){ 
-            var colorStep = colorList.getObjectValue(i)
-            midpoint = colorStep.getInteger(s2t('midpoint')),//0..100, first midpoint  is always 50 
-            location = colorStep.getInteger(s2t('location')),//0..4096
-            type = t2s(colorStep.getEnumerationValue(s2t('type'))),//
-            color = colorStep.getObjectValue(s2t('color'));
-            colors.push({location:location, type:'raw', color:color});
-            if (midpoint!=50){//add displacement of midpoint step, if midpoint not 50
-                    var prev = colorList.getObjectValue(i-1),//||colorStep,
-                    prevLocation = prev.getInteger(s2t('location')),
-                    prevColor = prev.getObjectValue(s2t('color'));
-                    colors.push({
-                        location: prevLocation + (location-prevLocation)*midpoint*0.01, 
-                        type:'object',
-                        color:getMidColor(color, prevColor)
-                    })
-                }
-        }
-        colors.sort(function(a,b){return a.location - b.location});
-        
-        //Generate css gradient string
-        var lRange = 4096;//location range   
-        var color, transp, prevColor, prevTransp;
-        var stoppr = 120;
-        for (var ic = 0, it = 0; ic<colors.length || it < trans.length && stoppr--; ){
-            //$.writeln(stoppr+' : '+(colors[ic] && colors[ic].location)+' : '+(trans[it]&&trans[it].location));        
-            color = colors[ic] || {location:lRange, color:color.color}; //end limiter color
-            prevColor = colors[ic-1] || {location:0, color:color.color}; //start limiter color
-            transp = trans[it] || {location:lRange, opacity:transp.opacity}; //end limiter transp
-            prevTransp = trans[it-1] || {location:0, opacity: transp.opacity}; //start limiter transp
-            
-            if (Math.abs(color.location - transp.location) < 42) {//colorstep==transparentstep
-                var pos = Math.round(color.location/lRange*100);
-                result += getColor( color.color, trans.opacity*(globalOpacity*.01) ) + " " + (pos == 0 ? "0, " : (pos + "%, "));
-                //$.writeln('eq')
-                it++; ic++;
-            } else if (color.location < transp.location){//colorstep
-                result += getColor( color.color, getMid(transp.opacity, prevTransp.opacity, (color.location - prevTransp.location)/(transp.location - prevTransp.location))  ) + " ";
-                result += (color.location/lRange*100).toFixed(0)+'%, ';
-                //$.writeln('c < t: res')
-                ic++;
-            } else if (color.location > transp.location ) {//transpstep
-                result += getColor( getMidColor(color.color, prevColor.color, (transp.location - prevColor.location)/(color.location - prevColor.location)), transp.opacity ) + " ";
-                result += (transp.location/lRange*100).toFixed(0)+'%, ';
-                //$.writeln('c > t')
-                it++;
-            } else {$.writeln("Dude, something is gone wrong in gradient generation: infinite cycling.");ic++; it++}
-        }
-        result = result.substr (0, result.length-2) + ')';    
-        //$.writeln("background: "+result);
-        return result;    
-    },
-
-    
     
 
     /*=====================================================Rendering===============================================*/
@@ -660,6 +557,7 @@ extend(P, {
     //Return one box-shadow prefixed
     renderBoxShadow: function(prefix){
         var self = this, o = self.settings, css = self.cssModel,  result = "", delim = self.DELIM;
+        if (!css['box-shadow'].length) return "";
         prefix = prefix || "";
         result += prefix + "box-shadow:"+ delim;
         for (var i = css['box-shadow'].length; i--;){
@@ -714,45 +612,7 @@ extend(P, {
         return result;        
     },
 
-    //deprecated render fill layer = gradient, solid fill
-    renderFillLayer : function(css) {
-        var boxShadow = "", cssStr="";
-        //Box-shadow
-        if (css['box-shadow-stroke']) boxShadow += css['box-shadow-stroke'] + (c?' /*stroke*/':'') + ',' + delim;
-        if (css['inner-shadow']) boxShadow += css['inner-shadow'] + (c?' /*inner-shadow*/':'') + ',' + delim;
-        if (css['inner-glow']) boxShadow += css['inner-glow'] + (c?' /*inner-glow*/':'') + ',' + delim;
-        if (css['outer-glow']) boxShadow += css['outer-glow'] + (c?' /*outer-glow*/':'') + ',' + delim;
-        if (css['drop-shadow']) boxShadow += css['drop-shadow'] + (c?' /*drop-shadow*/':'') + ',' + delim;
-        if (boxShadow) boxShadow = boxShadow.substr (0, boxShadow.length-2) + ';\n';
-        /*if (settings.showPrefixes){ //Box-shadow is contemporary now, prefixes are deprecated. Don't look at them.
-             for (var i = prefixes.length; i--;){
-                    cssStr += prefixes[i] + 'box-shadow:' + delim + boxShadow;
-                 }
-             } */
-        if (boxShadow) boxShadow = 'box-shadow:' + delim + boxShadow;
-        cssStr += boxShadow;    
-         //Border Stroke    
-        if (css['border-stroke']) cssStr += 'border:' + delim+css['border-stroke'] + (c?' /*stroke*/':'') + ';\n';    
-        //Background
-        var gradientOverlay = "", colorOverlay = "";
-        if(css['gradient-overlay']) gradientOverlay += css['gradient-overlay'] + (c?' /*gradient overlay*/':'') + ',' + delim;
-        if(css['color-overlay']) colorOverlay += css['color-overlay'] + (c?' /*color overlay*/':'') + ',' + delim;  
-        if (gradientOverlay || colorOverlay){
-            if (settings.showPrefixes){
-                 for (var i = prefixes.length; i--;){
-                    var background = 'background:'+ delim + colorOverlay + prefixes[i] + gradientOverlay;
-                    background = background.substr (0, background.length-2) + ';\n';
-                    cssStr += background;
-                 }
-            } 
-            var background = 'background:'+ delim + colorOverlay + gradientOverlay;
-            background = background.substr (0, background.length-2) + ';\n';
-            cssStr += background;
-        }
-        
-        return cssStr;
-    },
-    
+       
       
     //==============================Main function - returns CSS string with rendered result
     getLayerCss : function(){

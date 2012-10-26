@@ -3,6 +3,12 @@
 #include "include/models.jsxinc"
 #include "include/photoshopr.jsxinc"
 
+//TODO: 
+/*
+    - Create test document,
+    - Go through all actions and compare result with predefined values
+    - Output status
+*/
 
 //log( extend({a:23, b:1,c:2,d:3}, {b:3}, {c:4,d:5}, {f:12}, {b:5}, undefined, {}) )
 
