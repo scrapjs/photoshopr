@@ -18,18 +18,19 @@ var Gradient = function(o){
     return this._init(o);
 }    
 Gradient.prototype =extend({}, {
-    options: {
+    defaults: {
         type: "linear", //radial, linear, reflected
         steps: [], //{location, color}
         angle: 0, //in deg
         opacity: 100, //resulting opacity of gradient, applied after color opacities
         LOCATION_RANGE:100, //It's supposed location for full element height
         reversed: false,
-        comment: "" //To insert in css rendering
+        comment: "", //To insert in css rendering
+        mode: "normal" //Mode that overwrites all the color's mode
     },
     _init: function(o){
         var self = this;
-        self.options = extend({},self.options, o);
+        self.options = extend({},self.defaults, o);
         return self;
     },
     toCSS: function(prefix){
@@ -44,22 +45,23 @@ Gradient.prototype =extend({}, {
                 break;
             default:
                 var angle = o.reversed ? ((o.angle + 180)%360) : o.angle;
+                $.writeln(o.reversed)
                 result+= prefix + "linear-gradient(";
                 //Do direction
                 switch (angle){
                     case 90:
-                        result += "top, ";
+                        result += "bottom, ";
                         break;
                     case -90:
                     case 270:
-                    result += "bottom, ";
+                    result += "top, ";
                     break;
                     case 0:
-                    result += "right, ";
+                    result += "left, ";
                     break;
                     case 180:
                     case -180:
-                    result += "left, ";
+                    result += "right, ";
                     break;
                     default:
                     result += angle + "deg, ";
@@ -69,7 +71,7 @@ Gradient.prototype =extend({}, {
         o.steps.sort(function(a,b){return a.location - b.location});
         for (var i = 0; i < o.steps.length; i++){
             result += o.steps[i].color/*.applyOpacity(o.opacity)*/.toCSS();
-            result += " "+o.steps[i].location + "%," + delim;
+            result += " "+o.steps[i].location + "%, ";
         }
     result = result.substr (0, result.length-2) + ')';
     o.comment && (result += " /*" + o.comment + "*/");
@@ -209,17 +211,17 @@ extend(Color, {
     }
 });
 extend(Color.prototype, {
-    options:{
+    defaults:{
         mode:'normal',
         format: 'rgb', //hsl, rgb, hex
         opacity: 100,
-        color:null, //It would be a SolidColor
+        //color:null, //It would be a SolidColor
         comment:"" //To insert after color def in css
     },
     _init:function(opts){
-        var self = this, o = self.options;
-        self.options = extend({},self.options, opts);
-        if (!o.color) o.color = new SolidColor();
+        var self = this;
+        self.options = extend({}, self.defaults, opts);
+        if (!self.options.color) self.options.color = new SolidColor();
         return self;
     },
     r:function(arg){return (arg!==undefined) ? (this.options.color.rgb.red = arg) : this.options.color.rgb.red},
@@ -286,7 +288,7 @@ var Shadow = function(o){
     return this._init(o);
 }
 extend(Shadow.prototype,{
-    options:{
+    defaults:{
         isTextShadow:false,
         inset:false,
         x:0,
@@ -299,7 +301,7 @@ extend(Shadow.prototype,{
     },
     _init: function(o){
         var self = this;
-        self.options = extend({},self.options, o);
+        self.options = extend({}, self.defaults, o);
         return self;
     },
     toCSS: function(){
@@ -338,33 +340,49 @@ applyOverlay : function(objA, objB){
     var a = "C", b = "C";    
     if (objA instanceof Gradient) a = "G";
     if (objB instanceof Gradient) b = "G";
-    var result = this["apply"+a+b+"Overlay"](objA, objB, objB.get('mode'));
+    var result = this["apply"+a+b+"Overlay"](objA, objB);
     return result;
 },
 //color over color
-applyCCOverlay : function(colorA, colorB, mode){
+applyCCOverlay : function(colorA, colorB){
     //Reslt of overlay is a mix of blended top layer and bottom origin layer leveraged by opacity-midpoint.
-    return this.proccessBlend[mode](colorA, colorB);
+    return this.proccessBlend[colorB.get("mode")](colorA, colorB);
 },
 //color over gradient
-applyGCOverlay : function(grad, color, mode){
-    return color;
+applyGCOverlay : function(grad, color){
+    var steps = grad.get("steps");
+    for (var i = 0; i < steps.length; i++){
+        step = steps[i];
+        step.color = this.proccessBlend[color.get("mode")](step.color, color);
+    }; //TODO: check if we could optimize gradient by abandoning redundant colors 
+    return grad;
 },
 //gradient over color
-applyCGOverlay : function(color, grad, mode){
+applyCGOverlay : function(color, grad){
+    var steps = grad.get("steps"), mode = grad.get("mode");
+    for (var i = 0; i < steps.length; i++){
+        var step = steps[i];
+        step.color = this.proccessBlend[mode](color, step.color);
+    }; //TODO: check if we could optimize gradient by abandoning redundant colors 
     return grad;
 },
 //gradient over gradient
-applyGGOverlay : function(gradA, gradB, mode){
+applyGGOverlay : function(gradA, gradB){
+    var steps = grad.get("steps"), mode = grad.get("mode");
+    for (var i = 0; i < steps.length; i++){
+        step = steps[i];
+        step.color = this.proccessBlend[mode](step.color, color);
+    }; //TODO: check if we could optimize gradient by abandoning redundant colors 
     return gradB
 },
 
 //Object with blend modes proccessings
+//Facts:
+// - layer opacity results only in the end of operations
+// - 
 proccessBlend : {
     "normal" : function(ca, cb){
         var c = new Color();
-        //$.writeln(ca.toCSS());
-        //$.writeln(cb.toCSS());
         c.a(ca.a() + cb.a()*(1-ca.a()));
         c.r( (cb.r() * cb.a() + ca.r() * (1 - cb.a()) * ca.a()) / c.a() );
         c.g( (cb.g() * cb.a() + ca.g() * (1 - cb.a()) * ca.a()) / c.a() );
@@ -372,32 +390,117 @@ proccessBlend : {
         return c;
     },
     "darken" : function(){
+        var c = new Color();
+        c.a(cb.a());
+        c.r( Math.min(cb.r() , ca.r() ));
+        c.g( Math.min(cb.g() , ca.g() ));
+        c.b( Math.min(cb.b() , ca.b() ));
+        return this.normal(ca, c);
     },
-    "multiply" : function(){
+    "multiply" : function(ca ,cb){
+        var mult = function(base, adj) { return ((base * adj) / 255); }
+        var c = new Color();
+        c.a(cb.a());
+        c.r( mult(ca.r() , cb.r() ) );
+        c.g( mult(ca.g(), cb.g() ) );
+        c.b( mult(ca.b(), cb.b() ) );
+        return this.normal(ca, c);
     },    
-    "colorBurn" : function(){
+    "colorBurn" : function(ca, cb){
+        var cburn = function(base, adj) { return adj <= 0 ? 0 : Math.max(255 - ((255 - base) * 255 / adj), 0); }
+        var c = new Color();
+        c.a(cb.a());
+        c.r( cburn(ca.r() , cb.r() ) );
+        c.g( cburn(ca.g(), cb.g() ) );
+        c.b( cburn(ca.b(), cb.b() ) );
+        return this.normal(ca, c);
     },
-    "linearBurn" : function(){
+    "linearBurn" : function(ca, cb){
+        var c = new Color();
+        var burn = function(base, adj) { return Math.max(0, (base + adj - 255)); }
+        c.a(cb.a());
+        c.r( burn(ca.r(), cb.r()) );
+        c.g( burn(ca.g(), cb.g()) );
+        c.b( burn(ca.b(), cb.b()) );        
+        return this.normal(ca, c);
     },
-    "darkerColor" : function(){
+    "darkerColor" : function(ca, cb){
+        var c = new Color();
+        c.a(cb.a());
+        if ( cb.r() * 0.3 + cb.g() * 0.59 + cb.b() * 0.11 > 
+        ca.r() * 0.3 + ca.g() * 0.59 + ca.b()* 0.11) {
+            c.r(ca.r());
+            c.g(ca.g());
+            c.b(ca.b());
+        };
+        return this.normal(ca, c);        
     },
 
-    "lighten" : function(){
+    "lighten" : function(ca, cb){
+        var lighten = function(base, adj) { return Math.max(base, adj); }
+        var c = new Color();
+        c.a(cb.a());
+        c.r( lighten(ca.r() , cb.r() ) );
+        c.g( lighten(ca.g(), cb.g() ) );
+        c.b( lighten(ca.b(), cb.b() ) );
+        return this.normal(ca, c);
     },
-    "screen" : function(){
+    "screen" : function(ca, cb){
+        var screen = function(base, adj) { return (255 - (((255 - base) * (255 - adj)) / 255)); }
+        var c = new Color();
+        c.a(cb.a());
+        c.r( screen(ca.r() , cb.r() ) );
+        c.g( screen(ca.g(), cb.g() ) );
+        c.b( screen(ca.b(), cb.b() ) );
+        return this.normal(ca, c);
     },
-    "colorDodge" : function(){
+    "colorDodge" : function(ca, cb){
+        var cdodge = function(base, adj) { return adj >= 255 ? 255 : Math.min(base * 255 / (255 - adj), 255); }
+        var c = new Color();
+        c.a(cb.a());
+        c.r( cdodge(ca.r() , cb.r() ) );
+        c.g( cdodge(ca.g(), cb.g() ) );
+        c.b( cdodge(ca.b(), cb.b() ) );
+        return this.normal(ca, c);
     },
-    "linearDodge" : function(){
+    "linearDodge" : function(ca,cb){
+        var ldodge = function(base, adj) { return Math.min((base + adj), 255); }
+        var c = new Color();
+        c.a(cb.a());
+        c.r( ldodge(ca.r() , cb.r() ) );
+        c.g( ldodge(ca.g(), cb.g() ) );
+        c.b( ldodge(ca.b(), cb.b() ) );
+        return this.normal(ca, c);
     },
     "lighterColor" : function(){
     },
 
-    "overlay" : function(){
+    "overlay" : function(ca,cb){
+        var c = new Color();
+        var overlay = function(base, adj) { return (base < 128) ? ((2 * base * adj) / 255) : (255 - (2 * (255 - base) * (255 - adj) / 255)); }      
+        c.a(cb.a());
+        c.r( overlay(ca.r(), cb.r()) );
+        c.g( overlay(ca.g(), cb.g()) );
+        c.b( overlay(ca.b(), cb.b()) );
+        return this.normal(ca, c);
     },
-    "softLight" : function(){
+    "softLight" : function(ca, cb){
+        var c = new Color();
+        var softlight = function(base, adj) { return (base < 128) ? (((adj>>1) + 64) * base * (2/255)) : (255 - (191 - (adj>>1)) * (255 - base) * (2 / 255)); }
+        c.a(cb.a());
+        c.r( softlight(ca.r(), cb.r()) );
+        c.g( softlight(ca.g(), cb.g()) );
+        c.b( softlight(ca.b(), cb.b()) );
+        return this.normal(ca, c);
     },
-    "hardLight" : function(){
+    "hardLight" : function(ca, cb){
+        var hlight = function() {return adj < 128 ? (2 * base * adj) / 255 : 255 - ((2 * (255 - base) * (255 - adj)) / 255)};
+        var c = new Color();
+        c.a(cb.a());
+        c.r( hlight(ca.r(), cb.r()) );
+        c.g( hlight(ca.g(), cb.g()) );
+        c.b( hlight(ca.b(), cb.b()) );
+        return this.normal(ca, c);
     },
     "vividLight" : function(){
     },
@@ -408,11 +511,32 @@ proccessBlend : {
     "hardMix" : function(){
     },
 
-    "difference" : function(){
+    "difference" : function(ca, cb){
+        var diff = function(base, adj) { return Math.abs(base - adj); }
+        var c = new Color();
+        c.a(cb.a());
+        c.r( diff(ca.r(), cb.r()) );
+        c.g( diff(ca.g(), cb.g()) );
+        c.b( diff(ca.b(), cb.b()) );
+        return this.normal(ca, c);
     },
-    "exclusion" : function(){
+    "exclusion" : function(ca, cb){
+        var excl = function(base, adj) { return 255 - (((255 - base) * (255 - adj) / 255) + (base * adj / 255));}
+        var c = new Color();
+        c.a(cb.a());
+        c.r( excl(ca.r(), cb.r()) );
+        c.g( excl(ca.g(), cb.g()) );
+        c.b( excl(ca.b(), cb.b()) );
+        return this.normal(ca, c);
     },
-    "subtract" : function(){
+    "subtract" : function(ca, cb){
+        var sub = function(base, adj) { return Math.max((base - adj), 0); }
+        var c = new Color();
+        c.a(cb.a());
+        c.r( sub(ca.r(), cb.r()) );
+        c.g( sub(ca.g(), cb.g()) );
+        c.b( sub(ca.b(), cb.b()) );
+        return this.normal(ca, c);
     },
     "divide" : function(){
     },

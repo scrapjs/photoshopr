@@ -43,6 +43,7 @@ var showReference = function (ref) {
 var log = function(arg){
     if (arg instanceof ActionDescriptor) return showDescriptor(arg);    
     if (arg instanceof ActionList)  return showActionList(arg);
+    if (typeof arg == "string") return $.writeln(arg);
     var obj = arg;
     for (var k in obj.reflect.properties){
         try{

@@ -15,4 +15,4 @@ $.writeln(cssStr)
 $.writeln( t2s(c2t("Clr ")) )
 $.writeln( t2s(c2t("RGBC")) )*/
 //photoshopr.copy(cssStr);
-//photoshopr.bindNotifiers();
+//photoshopr.bindNotifiers();   

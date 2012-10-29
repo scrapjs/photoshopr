@@ -105,7 +105,6 @@ extend(P, {
         var self = this, l = self.layer;
         self.lContent = self.getLayerDescriptor(s2t( "contentLayer" ));        
         try { 
-            $.writeln("inside Color fill layer")
             var colr = Color.create(
             self.lContent.getList(s2t('adjustment')).getObjectValue(0).getObjectValue(s2t('color')),
             {opacity: self.layer.fillOpacity});
@@ -432,10 +431,10 @@ extend(P, {
             if(!enabled) return;    
             var mode = fxProp.getEnumerationValue(s2t("mode"));  
             var grad = Gradient.create(gradientRef, {
-                opacity: opacity          
+                opacity: opacity
             });
             if (!grad) return "/* Cannot create gradient */"; //Cannot create gradient
-            
+            grad.set("mode", t2s(mode));
             //defining exact size of gradient and render
             var position = "";//TODO: take into account        
             switch(type){
@@ -517,9 +516,9 @@ extend(P, {
         if (bgs.length == 0) return "";
         var result = 'background:'+ delim;
         prefix = prefix || "";
-        var resObj = bgs[0];
-        for (var i = 1; i < bgs.length; i++){
-            resObj = Graph.applyOverlay(resObj, bgs[i]);
+        var resObj = bgs[bgs.length-1];
+        for (var i = bgs.length-1; i--;){
+            resObj = Graph.applyOverlay(bgs[i], resObj);
         }
         result += resObj.toCSS(prefix) + ';\n';
         return result;
