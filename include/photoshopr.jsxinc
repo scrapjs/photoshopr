@@ -9,15 +9,19 @@ var Photoshopr = function(){
 Photoshopr.prototype = {
     //Default settings
     settings : {
-        showPrefixes : false,
+        showPrefixes : true, //temptation to get rid of: who da hell doesn't need prefixes?
         colorFormat : 'rgb', //rgb, hsl, hex
         wrapLines: true,
         comments: false,
-        strokeType: 'box-shadow', //'box-shadow', 'border'
-        textProperties: true, //do text layers
-        mergeBackground: true,
-        bindToCopyFx: true, //Copy css to clipboard or not when copying layer style
-        showResultDialog: false //Show dialog with result or not
+        makeUnsupportedCSS3: false, //
+        //deprecated - do border always
+        //strokeType: 'box-shadow', //'box-shadow', 'border'
+        //deprecated - do text always
+        //textProperties: true, //do text layers
+        //deprecated - do merge always
+        //mergeBackground: true,
+        bindToCopyFx: false, //Copy css to clipboard or not when copying layer style
+        showResultDialog: true //Show dialog with result or copy to clipboard
     },
 
 

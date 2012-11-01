@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<gpc defaultLocale="en_US" version="3" keySequence="22" currentLocale="en_US">
+  <product appid="PHSP" version="12" name="Photoshop CS5/CS5.1"/>
+  <target id="PHSP-12"/>
+  <ConfiguratorPanel name="Photoshopr" width="220" height="48" minWidth="140" minHeight="48" maxWidth="300" maxHeight="48" init="doInit" close="doClose" persistent="true" extensionId="com.configurator.Photoshopr" extensionVersion="1.0.0" menuName="Photoshopr">
+    <onInit><![CDATA[]]></onInit>
+    <extensionDescription><![CDATA[]]></extensionDescription>
+    <extensionAuthor><![CDATA[Dmitry Ivanov]]></extensionAuthor>
+    <onClose><![CDATA[]]></onClose>
+    <eventListeners>
+      <function id="doInit" actionType="jsfunction" jsFunctionName="invoke_script">
+        <param id="onInit"/>
+      </function>
+      <function id="doClose" actionType="jsfunction" jsFunctionName="invoke_script">
+        <param id="onClose"/>
+      </function>
+    </eventListeners>
+    <ps_script_file _itemId="ps_actionscript_scriptfile" label="$$$/Configurator/ActionScript/ScriptFile/name###1" toolTip="$$$/Configurator/ActionScript/ScriptFile/desc###2" cfgVisible="$$$/Configurator/Attribute/visible/value###3" fileUrl="$$$/Configurator/key_###4" icon="ps_script_file" overIcon="ps_script_file_r" showIcon="false" top="8" left="8" right="40" x="10" y="10" width="173" height="32"/>
+    <ps_script_file _itemId="ps_actionscript_scriptfile" label="$$$/Configurator/ActionScript/ScriptFile/name###17" toolTip="$$$/Configurator/ActionScript/ScriptFile/desc###18" cfgVisible="$$$/Configurator/Attribute/visible/value###19" fileUrl="$$$/Configurator/key_###20" icon="ps_script_file" overIcon="ps_script_file_r" showIcon="false" x="8" y="137" width="32" height="32" top="8" left="" right="8"/>
+  </ConfiguratorPanel>
+</gpc>

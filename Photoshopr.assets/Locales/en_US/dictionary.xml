@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<asf locale="en_US" version="1.0" xmlns="http://ns.adobe.com/asf">
+  <str name="Configurator/ActionScript/ScriptFile/desc###10" translate="yes">
+    <val>Run JavaScript File</val>
+  </str>
+  <str name="Configurator/ActionScript/ScriptFile/desc###14" translate="yes">
+    <val>Copy selected path or vactor layer mask as SVG, applicable to the CSS background.</val>
+  </str>
+  <str name="Configurator/ActionScript/ScriptFile/desc###18" translate="yes">
+    <val>Make settings</val>
+  </str>
+  <str name="Configurator/ActionScript/ScriptFile/desc###2" translate="yes">
+    <val>Copy Layer effects &amp; layer fill style to the clipboard as CSS</val>
+  </str>
+  <str name="Configurator/ActionScript/ScriptFile/desc###6" translate="yes">
+    <val>Copy character &amp; paragraph properties of text layer to the CSS</val>
+  </str>
+  <str name="Configurator/ActionScript/ScriptFile/name###1" translate="yes">
+    <val>Get CSS</val>
+  </str>
+  <str name="Configurator/ActionScript/ScriptFile/name###13" translate="yes">
+    <val>Copy Path</val>
+  </str>
+  <str name="Configurator/ActionScript/ScriptFile/name###17" translate="yes">
+    <val>≡</val>
+  </str>
+  <str name="Configurator/ActionScript/ScriptFile/name###5" translate="yes">
+    <val>Copy Font properties</val>
+  </str>
+  <str name="Configurator/ActionScript/ScriptFile/name###9" translate="yes">
+    <val>Copy SizeCSS</val>
+  </str>
+  <str name="Configurator/Attribute/visible/value###11" translate="yes">
+    <val>True</val>
+  </str>
+  <str name="Configurator/Attribute/visible/value###15" translate="yes">
+    <val>true</val>
+  </str>
+  <str name="Configurator/Attribute/visible/value###19" translate="yes">
+    <val>True</val>
+  </str>
+  <str name="Configurator/Attribute/visible/value###21" translate="yes">
+    <val>True</val>
+  </str>
+  <str name="Configurator/Attribute/visible/value###22" translate="yes">
+    <val>True</val>
+  </str>
+  <str name="Configurator/Attribute/visible/value###3" translate="yes">
+    <val>True</val>
+  </str>
+  <str name="Configurator/Attribute/visible/value###7" translate="yes">
+    <val>True</val>
+  </str>
+  <str name="Configurator/key_###12" translate="yes">
+    <val/>
+  </str>
+  <str name="Configurator/key_###16" translate="yes">
+    <val>C:\Users\dmitry\Dropbox\dmitry-ivanov.me\public_html\playground\photoshopr\copyPath.jsx</val>
+  </str>
+  <str name="Configurator/key_###20" translate="yes">
+    <val>C:\Users\dmitry\Dropbox\dmitry-ivanov.me\public_html\playground\photoshopr\settingsPanel.jsx</val>
+  </str>
+  <str name="Configurator/key_###4" translate="yes">
+    <val>C:\Users\dmitry\Dropbox\dmitry-ivanov.me\public_html\playground\photoshopr\copyFx.jsx</val>
+  </str>
+  <str name="Configurator/key_###8" translate="yes">
+    <val/>
+  </str>
+  <str name="Configurator/Widget/HRule/desc" translate="yes">
+    <val/>
+  </str>
+</asf>
