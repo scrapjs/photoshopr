@@ -1,55 +1,151 @@
 ﻿//Debugging needs. Supposed to be turned off in production
-$.writeln("====================")
+$.writeln("====================");
+var logLevel = -1;
+var tab = "   "
+//print mark n loglevel times
+var level = function(mark){
+    var str = "";
+    if(!mark) mark = tab;
+    for (var i = 0; i < logLevel; i++){
+        str += mark;
+    }
+    return str;
+}
+
+//returns short ver of type string{
+shorten = function(type){
+    var str = "";
+    switch (type){
+        case DescValueType.LISTTYPE:
+                str = "list"
+            break;
+        case DescValueType.INTEGERTYPE:
+                str = "int"
+            break;
+        case DescValueType.ENUMERATEDTYPE:
+            str = "enum"
+            break;  
+        case DescValueType.STRINGTYPE:
+            str = "str"
+            break;
+        case DescValueType.DOUBLETYPE:
+            str = "double"
+            break;
+        case DescValueType.BOOLEANTYPE:
+            str = "bool"
+            break;            
+        case DescValueType.OBJECTTYPE:
+            str = "obj"
+            break;
+        case DescValueType.ALIASTYPE:
+            str = "alias"
+            break;
+        case DescValueType.CLASSTYPE:
+            str = "class"
+            break;
+        case DescValueType.UNITDOUBLE:
+            str = "units"
+            break;
+        case DescValueType.REFERENCETYPE:
+            str = "ref"
+            break;
+        case DescValueType.RAWTYPE:
+            str = "raw"
+            break;
+        default:
+            str = t2s(type)
+            break;
+    }
+return str;
+}
+
 //Debug functions - logs to console all properties & their types of @param actionDescriptor
 var showDescriptor = function(actionDescriptor){
-    $.writeln("-------------ActionDescriptor");
     for (var i = actionDescriptor.count; i--;){    
             var keyId = actionDescriptor.getKey(i), key = t2s(keyId);
-            var val = "Nan";
-            switch (actionDescriptor.getType(keyId)){
+            var val = "NaN";
+            var type = actionDescriptor.getType(keyId);
+            switch (type){
+                case DescValueType.LISTTYPE:
+                    val = "["+actionDescriptor.getList(keyId).count+"] of " + shorten(actionDescriptor.getList(keyId).getType(0));
+                    //log(actionDescriptor.getList(keyId));
+                    break;
                 case DescValueType.INTEGERTYPE:
                     val = actionDescriptor.getInteger(keyId);
                     break;
                 case DescValueType.ENUMERATEDTYPE:
-                    val = actionDescriptor.getEnumerationType(keyId);
+                    val = t2s(actionDescriptor.getEnumerationValue(keyId));
                     break;
                 case DescValueType.STRINGTYPE:
                     val = actionDescriptor.getString(keyId);
-                    break;      
+                    break;
                 case DescValueType.DOUBLETYPE:
                     val = actionDescriptor.getDouble(keyId);
+                    break;                 
+                case DescValueType.UNITDOUBLE:
+                    val = actionDescriptor.getUnitDoubleValue(keyId) + " " + t2s(actionDescriptor.getUnitDoubleType(keyId));
+                    break;
+                case DescValueType.BOOLEANTYPE:
+                    val = actionDescriptor.getBoolean(keyId);
+                    break;
+                case DescValueType.OBJECTTYPE:
+                    var obj = actionDescriptor.getObjectValue(keyId);
+                    val = "";
+                    for (var j = obj.count; j--;){
+                        val += "-"+t2s(obj.getKey(j)) + ", ";
+                    }
+                    val = val.substr(0, val.length - 2);
                     break;
             }
-            $.writeln(key + '  :  ' + actionDescriptor.getType(keyId) + ' : ' + val);
+            $.writeln(level() + "- " + key + ' : ' + shorten(actionDescriptor.getType(keyId)) + ' ' + val + ";");                
+            
         }
 }
 
 var showActionList = function (list){
-    $.writeln("-------------ActionList of type "+list.getType(0));
-    for (var i = list.count; i--;){
+    for (var i = 0; i<list.count; i++){
+        $.writeln(level() + "["+i+"]");
             switch (list.getType(i)){
                 case DescValueType.REFERENCETYPE:
                     showReference(list.getReference(i));
+                    break;
+                case DescValueType.ENUMERATEDTYPE:
+                    "Enum : " + t2s(list.getEnumerationValue(i));
+                    break;
+                case DescValueType.OBJECTTYPE:
+                    log(list.getObjectValue(i))
+                    break;
+                case DescValueType.BOOLEANTYPE:
+                    log(list.getBoolean(i));
                     break;
             }
     }
 }
 
 var showReference = function (ref) {
-    $.writeln("---------------ActionReference");
+    $.writeln(level() + "ActionReference");
     log(executeActionGet(ref))
 }
 
 var log = function(arg){
-    if (arg instanceof ActionDescriptor) return showDescriptor(arg);    
-    if (arg instanceof ActionList)  return showActionList(arg);
-    if (typeof arg == "string") return $.writeln(arg);
-    var obj = arg;
-    for (var k in obj.reflect.properties){
-        try{
-        $.writeln(obj.reflect.properties[k].name + '\t: ' + obj[obj.reflect.properties[k].name])
-        } catch (err) {
-            $.writeln("Error in " + obj.reflect.properties[k].name)
-         }
+    logLevel ++;
+    if (arg instanceof ActionDescriptor) {        
+        $.writeln(level()+"ActionDescriptor:");
+        showDescriptor(arg);
+    } else if (arg instanceof ActionList)  {
+        $.writeln("ActionList of "+shorten(arg.getType(0)) + ":");
+        showActionList(arg);
+    } else if (typeof arg == "string" || typeof arg == "boolean") {
+        $.writeln(level()+arg);
+    } else {
+        var obj = arg;
+        for (var k in obj.reflect.properties){
+            try{
+            $.writeln(obj.reflect.properties[k].name + '\t: ' + obj[obj.reflect.properties[k].name])
+            } catch (err) {
+                $.writeln("Error in " + obj.reflect.properties[k].name)
+             }
+        }
     }
+    logLevel--;
 }

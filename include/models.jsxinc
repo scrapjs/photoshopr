@@ -20,7 +20,7 @@ var Gradient = function(o){
 Gradient.prototype =extend({}, {
     defaults: {
         type: "linear", //radial, linear, reflected
-        steps: [], //{location, color}
+        //steps: [], //{location, color}
         angle: 0, //in deg
         opacity: 100, //resulting opacity of gradient, applied after color opacities
         LOCATION_RANGE:100, //It's supposed location for full element height
@@ -30,7 +30,8 @@ Gradient.prototype =extend({}, {
     },
     _init: function(o){
         var self = this;
-        self.options = extend({},self.defaults, o);
+        self.options = extend({steps:[]}, self.defaults,o);
+        self.options.prototype = self.defaults;
         return self;
     },
     toCSS: function(prefix){
@@ -45,7 +46,6 @@ Gradient.prototype =extend({}, {
                 break;
             default:
                 var angle = o.reversed ? ((o.angle + 180)%360) : o.angle;
-                $.writeln(o.reversed)
                 result+= prefix + "linear-gradient(";
                 //Do direction
                 switch (angle){
@@ -362,6 +362,7 @@ applyCGOverlay : function(color, grad){
     var steps = grad.get("steps"), mode = grad.get("mode");
     for (var i = 0; i < steps.length; i++){
         var step = steps[i];
+        step.color.a(grad.options.opacity/100 * step.color.a());
         step.color = this.proccessBlend[mode](color, step.color);
     }; //TODO: check if we could optimize gradient by abandoning redundant colors 
     return grad;

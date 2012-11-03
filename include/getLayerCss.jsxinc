@@ -77,9 +77,9 @@ extend(P, {
                 self.parseBMP();
             default: //There is effects layer. IDK what to do here.                    
         };
-        self.parseSize();
+        self.parseShape();
         if (self.lFX) self.parseFx();
-        self.parseOpacity();      
+        self.parseOpacity();
         return self;        
     },
 
@@ -103,7 +103,7 @@ extend(P, {
     //Make model of solid-fill-layer properties
     parseSolidFill : function(){
         var self = this, l = self.layer;
-        self.lContent = self.getLayerDescriptor(s2t( "contentLayer" ));        
+        self.lContent = self.getActiveLayerDescriptor(s2t( "contentLayer" ));        
         try { 
             var colr = Color.create(
             self.lContent.getList(s2t('adjustment')).getObjectValue(0).getObjectValue(s2t('color')),
@@ -115,18 +115,60 @@ extend(P, {
         return self;
     },
     
-    //Just defines an opacity of layer that will be applied to css
+    //Just defines an opacity of layer that will be applied to css, in case of text layer.
     parseOpacity : function(){
         var self = this, l = self.layer;
         self.cssModel.opacity = l.opacity/100;
         return self;
     },
 
-    //Parse size, bounds only
-    parseSize : function(){
-        var self = this, l = self.layer;
-        self.cssModel['width'] = 20;
+    //Parse shape: if rectangle, make border-radius & padding.
+    parseShape : function(){
+        var self = this, l = self.layer;                
+        var desc = self.getActiveVectorMaskDescriptor();       
+        
+        var shapesList = desc.getObjectValue(s2t("pathContents")).getList(s2t("pathComponents"));
+        var shape = {
+            points: shapesList.getObjectValue(0).getList(s2t("subpathListKey")).getObjectValue(0).getList(s2t("points")),
+            isClosed: shapesList.getObjectValue(0).getList(s2t("subpathListKey")).getObjectValue(0).getBoolean(s2t("closedSubpath")),
+            operation: shapesList.getObjectValue(0).getEnumerationValue(s2t("shapeOperation"))
+        }
+        log(shape.points.getObjectValue(0));
+        
+        
+        //TODO: define, is it rect? no? path?
+        if (self.isRect()) {
+            self.parseRect();
+        } else {
+            self.parsePath();
+        }
     },
+
+    //Defines is path rect
+    isRect : function(){
+        //Expert rules:
+        //If is not closed path - GTFO
+        //If more than 2 shapes - it is not rectangle
+        //If at least one negative angle - it is not rectangle
+        //If points not on bounds - it is not rect
+    },
+
+    //Shape is a rectangle - parse it's size, padding & border-radius
+    parseRect: function(){
+    },
+    
+    
+    //Parse vector-mask as SVG
+    parsePath : function(){
+        var path = "";
+        return path;
+    },
+
+
+    parseSize : function(){
+    },
+
+
 
      //Make model of gradient-fill-layer properties
     parseGradientFill : function(){
@@ -486,9 +528,11 @@ extend(P, {
     renderBackground : function(){
         var self =this, o = self.settings;
         var result = "";
-        if (o.mergeBackground){ //render blend modes background
+        //if (o.mergeBackground){ //render blend modes background
             result = self.renderMergedBackground();
-        } else { //render normal modes background            
+        //}
+        /* // always merge bg
+            else { //render normal modes background            
             if (o.showPrefixes){
                 var isGradientPresent = false; //at least one gradient in model
                 for (var i =  self.cssModel.background.length; i--;){
@@ -504,7 +548,7 @@ extend(P, {
                 }
             };
             result += self.renderMultipleBackground();
-        }
+        }*/
         return result;
     },
 

@@ -27,10 +27,10 @@ Photoshopr.prototype = {
 
     //
     _init: function(){
-        var self = this, o = self.settings;
+        var self = this;
         self.tempFolder = Folder.temp.fsName; //folderForTempFiles
         self.loadSettings();
-        self.DELIM = o.wrapLines ? "\n" : " ";
+        self.DELIM = self.settings.wrapLines ? "\n" : " ";
         
         app.preferences.exportClipboard = true;
         return self;
@@ -139,13 +139,24 @@ Photoshopr.prototype = {
         }
     },
 
-    //Get layer descriptor based on reference key in common case
-    getLayerDescriptor : function (key){
-        var ref;
-        ref = new ActionReference();
+    //Get active layer descriptor
+    getActiveLayerDescriptor : function (){
+        var ref = new ActionReference();
+        var key = c2t("Lyr "); //default ref key
         ref.putEnumerated( key, c2t('Ordn'), c2t('Trgt') );
         return executeActionGet( ref );
-    }
+    },
+
+    //Get active layer mask
+    getActiveVectorMaskDescriptor : function(){
+        var ref = new ActionReference();
+        //ref.putEnumerated( c2t("Lyr "), c2t('Ordn'), c2t('Trgt') );
+        ref.putEnumerated(c2t("Path"), c2t("Path"), s2t("vectorMask"))
+        var desc = executeActionGet( ref );
+        return desc;
+    },
+
+    
 }
 
 var photoshopr = new Photoshopr;

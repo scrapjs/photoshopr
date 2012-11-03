@@ -1,6 +1,6 @@
 ## TODO
 * - corret all blending modes
-* - correct blending modes for glow effects, like of reverse-multiply
+* - correct blending modes for glow effects, like of reverse-multiply. It's simple blendmode calc without alphamix.
 * - make multiple layers common rendering
 * - settings confine
 * - configurator panel
