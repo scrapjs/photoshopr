@@ -127,6 +127,7 @@ var showReference = function (ref) {
     log(executeActionGet(ref))
 }
 
+//Main logger function. USE THIS like log(anything)
 var log = function(arg){
     logLevel ++;
     if (arg instanceof ActionDescriptor) {        
@@ -135,7 +136,10 @@ var log = function(arg){
     } else if (arg instanceof ActionList)  {
         $.writeln("ActionList of "+shorten(arg.getType(0)) + ":");
         showActionList(arg);
-    } else if (typeof arg == "string" || typeof arg == "boolean") {
+    } else if (typeof arg == "string" || 
+                typeof arg == "boolean" || 
+                typeof arg == "number" ||
+                typeof arg == "int") {
         $.writeln(level()+arg);
     } else {
         var obj = arg;

@@ -124,32 +124,38 @@ extend(P, {
 
     //Parse shape: if rectangle, make border-radius & padding.
     parseShape : function(){
-        var self = this, l = self.layer;                
-        var desc = self.getActiveVectorMaskDescriptor();       
+        var self = this, l = self.layer, multishape = false;
         
+        //Create shape model
+        var desc = self.getActiveVectorMaskDescriptor();
         var shapesList = desc.getObjectValue(s2t("pathContents")).getList(s2t("pathComponents"));
-        var shape = {
-            points: shapesList.getObjectValue(0).getList(s2t("subpathListKey")).getObjectValue(0).getList(s2t("points")),
-            isClosed: shapesList.getObjectValue(0).getList(s2t("subpathListKey")).getObjectValue(0).getBoolean(s2t("closedSubpath")),
-            operation: shapesList.getObjectValue(0).getEnumerationValue(s2t("shapeOperation"))
-        }
-        log(shape.points.getObjectValue(0));
+        if (shapesList.count > 1) { //if multishape
+            multishape = true;
+            self.combineActiveLayerPaths();
+            desc = self.getActiveVectorMaskDescriptor();
+            shapesList = desc.getObjectValue(s2t("pathContents")).getList(s2t("pathComponents"));
+        }        
+        var shape = Shape.create(shapesList.getObjectValue(0));
+        if (multishape) self.historyStep(-1); //return combining path to initial state
         
+        //log(self.layer.bounds);        
+        log(shape.get("isRect"))
         
         //TODO: define, is it rect? no? path?
-        if (self.isRect()) {
-            self.parseRect();
-        } else {
-            self.parsePath();
-        }
+    
+        
     },
-
+    
     //Defines is path rect
-    isRect : function(){
+    isRect : function(shape){
         //Expert rules:
         //If is not closed path - GTFO
-        //If more than 2 shapes - it is not rectangle
-        //If at least one negative angle - it is not rectangle
+        if (!shape.isClosed) return false;   
+        
+        //If points more than 4 and no smooth angles
+        
+        //If not convex hull - bye bye
+        
         //If points not on bounds - it is not rect
     },
 

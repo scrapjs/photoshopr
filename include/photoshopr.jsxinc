@@ -155,6 +155,67 @@ Photoshopr.prototype = {
         var desc = executeActionGet( ref );
         return desc;
     },
+    
+    //Combine vector mask paths of active layer
+    combineActiveLayerPaths : function(){
+        // select vector mask
+        var idslct = charIDToTypeID( "slct" );
+            var desc52 = new ActionDescriptor();
+            var idnull = charIDToTypeID( "null" );
+                var ref48 = new ActionReference();
+                var idPath = charIDToTypeID( "Path" );
+                var idPath = charIDToTypeID( "Path" );
+                var idvectorMask = stringIDToTypeID( "vectorMask" );
+                ref48.putEnumerated( idPath, idPath, idvectorMask );
+                var idLyr = charIDToTypeID( "Lyr " );
+                var idOrdn = charIDToTypeID( "Ordn" );
+                var idTrgt = charIDToTypeID( "Trgt" );
+                ref48.putEnumerated( idLyr, idOrdn, idTrgt );
+            desc52.putReference( idnull, ref48 );
+        executeAction( idslct, desc52, DialogModes.NO );
+        //combine all paths
+        var idcombine = stringIDToTypeID( "combine" );
+            var desc53 = new ActionDescriptor();
+            var idnull = charIDToTypeID( "null" );
+                var ref49 = new ActionReference();
+                var idPath = charIDToTypeID( "Path" );
+                var idOrdn = charIDToTypeID( "Ordn" );
+                var idTrgt = charIDToTypeID( "Trgt" );
+                ref49.putEnumerated( idPath, idOrdn, idTrgt );
+            desc53.putReference( idnull, ref49 );
+        executeAction( idcombine, desc53, DialogModes.NO );
+    },
+    
+    //Go to history state i steps before/after (i is negative/positive)
+    historyStep: function(n){
+        if (n < 0){ //back
+            var idslct = charIDToTypeID( "slct" );
+                var desc57 = new ActionDescriptor();
+                var idnull = charIDToTypeID( "null" );
+                    var ref53 = new ActionReference();
+                    var idHstS = charIDToTypeID( "HstS" );
+                    var idOrdn = charIDToTypeID( "Ordn" );
+                    var idPrvs = charIDToTypeID( "Prvs" );
+                    ref53.putEnumerated( idHstS, idOrdn, idPrvs );
+                desc57.putReference( idnull, ref53 );
+            for (var i = n; i++;){
+            executeAction( idslct, desc57, DialogModes.NO );
+            }
+        } else if (n > 0){ //forward
+            var idslct = charIDToTypeID( "slct" );
+                var desc56 = new ActionDescriptor();
+                var idnull = charIDToTypeID( "null" );
+                    var ref52 = new ActionReference();
+                    var idHstS = charIDToTypeID( "HstS" );
+                    var idOrdn = charIDToTypeID( "Ordn" );
+                    var idNxt = charIDToTypeID( "Nxt " );
+                    ref52.putEnumerated( idHstS, idOrdn, idNxt );
+                desc56.putReference( idnull, ref52 );                
+            for (var i = n; i--;){
+            executeAction( idslct, desc56, DialogModes.NO );
+            }
+        }        
+    }
 
     
 }

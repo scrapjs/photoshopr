@@ -1,25 +1,22 @@
-# Photoshop extension that makes possible to convert layer style/font properties to CSS
+# [in development] Photoshop extension that makes possible to convert layer style/font properties to CSS
+
 ## Features
-* Drop-shadow, outer-glow, inner-shadow, inner-glow effects as CSS box-shadow
-* Gradient overlay, color overlay & layer fill as multiple CSS backgrounds
-* **Merge multiple mackgrounds** in accordance with blending modes
-* Character & paragraph properties of text layer as CSS fontproperties
-* - Composite style from few selected layers (text layer + shape layer, for example)
-* - Path as SVG in background
-* - Size & border-radius
-* - Texture overlay as data-URI
-* - Optional browser prefixes
-* - Stroke FX either as a border, outline or box-shadow
-* - Copy layer style as CSS to clipboard
-* - Color formats: rgba, hsla, hex
-* - Popup with style on hotkey
-* - Bevel & Emboss emulation
+* _Drop Shadow_, _Outer Glow_, _Inner Shadow_, _Inner Glow_ ⇝ `box-shadow`. **Support of blending modes**: resulting color corrected to match FX blending mode. _Normal_ blending mode remains color the same.
+* _Gradient Overlay_, _Color Overlay_ and fill (_Gradient_ or _Solid Color_) ⇝ merged `background`.
+* Recognized rectangles ⇝ `border-radius`, `transform` and size.
+* Vector-masks ⇝ SVG as `data:image/svg+xml, …`.
+* Pattern fill ⇝ `data:image/png, …`
+* _Character_ and _Paragraph_ ⇝ `font-` properties.
+* Multiple selected layers ⇝ composite style.
+* Browser prefixes
+* Color formats: rgba, hsla, hex
+* _Bevel & Emboss_ emulation
 
 ## Usage
 1. Install `Photoshopr.exp` as extension
-2. Open _Window → Extensions → Photoshopr_
-3. Select layer and copy it's style. Resulting CSS will be placed to the clipboard.
-4. Paste style into your IDE, editor or even web-inspector.
+2. Open _Window_ → _Extensions_ → _Photoshopr_
+3. Select layer and press _Ges CSS_
+4. Paste result into your IDE, editor or even web-inspector!
 
 ## License
 MIT

@@ -2,21 +2,27 @@
 * - corret all blending modes
 * - correct blending modes for glow effects, like of reverse-multiply. It's simple blendmode calc without alphamix.
 * - make multiple layers common rendering
-* - settings confine
 * - configurator panel
-* - clipboard appendix instead of clear
 * - promo page with donate
+* - define rect  & border-radius. Recognise difference with 
+
+* - Settings add rendering choices:
+ * - render SVG as data-URI or as sprite data-URI
+ * - render Patters & layer as data-URI
+ * - render text properties
+ * - render sizes
+
 * - my site minimal working version
-** - Projects entities
-** - Blog entities
+ * - Projects entities
+ * - Blog entities
 * - PR
-** - habrahabr
-** - geeklist
-** - facebook
-** - vk
-** - lj
-** - personal AD to web-developers (for free)
-** - smashingmagazine
-** - css tuts 
-** - smashingmagazine thematic questions
-** - everywhere in google search PR
+ * - habrahabr
+ * - geeklist
+ * - facebook
+ * - vk
+ * - lj
+ * - personal AD to web-developers (for free)
+ * - smashingmagazine
+ * - css tuts 
+ * - smashingmagazine thematic questions
+ * - everywhere in google search PR

@@ -13,14 +13,16 @@ GetSetOptions = {
     }
 }
 
-//Gradient model
+
+//========================================================Gradient model
 var Gradient = function(o){
     return this._init(o);
-}    
+};
+//-----------------------------------------------------------------------------------------------Gradient prototype
 Gradient.prototype =extend({}, {
     defaults: {
         type: "linear", //radial, linear, reflected
-        //steps: [], //{location, color}
+        //steps: null, //location, color
         angle: 0, //in deg
         opacity: 100, //resulting opacity of gradient, applied after color opacities
         LOCATION_RANGE:100, //It's supposed location for full element height
@@ -28,12 +30,14 @@ Gradient.prototype =extend({}, {
         comment: "", //To insert in css rendering
         mode: "normal" //Mode that overwrites all the color's mode
     },
+
     _init: function(o){
         var self = this;
         self.options = extend({steps:[]}, self.defaults,o);
         self.options.prototype = self.defaults;
         return self;
     },
+
     toCSS: function(prefix){
         var self = this, o = self.options,
         result = "";
@@ -76,9 +80,14 @@ Gradient.prototype =extend({}, {
     result = result.substr (0, result.length-2) + ')';
     o.comment && (result += " /*" + o.comment + "*/");
     return result;
+    },
+
+    //Return grad as SVG
+    getSVG: function(){
     }
 }, GetSetOptions);
-//Gradient singleton methods
+
+//-----------------------------------------------------------------------------------Gradient singleton methods
 extend(Gradient,{
     //Kind of gradient fabric
     create: function(arg, opts){
@@ -99,8 +108,7 @@ extend(Gradient,{
         transpList = gradientRef.getList(s2t('transparency')),
         colorList = gradientRef.getList(s2t('colors')),
         iicon = gradientRef.getDouble(s2t('interfaceIconFrameDimmed')); //TODO: whattafuck is this? Do get know    
-        var trans = [], colors = []; //technical arrays
-        
+        var trans = [], colors = []; //technical arrays        
         //grab all transparents
         for (var i = transpList.count; i--;){ 
             var transpObj = transpList.getObjectValue(i),
@@ -118,8 +126,7 @@ extend(Gradient,{
                 })
             }
         }  
-        trans.sort(function(a,b){return a.location - b.location});
-        
+        trans.sort(function(a,b){return a.location - b.location});        
         //grab all colors
         for (var i = 0; i < colorList.count ;i++){ 
             var colorStep = colorList.getObjectValue(i)
@@ -138,8 +145,7 @@ extend(Gradient,{
                     })
                 }
         }
-        colors.sort(function(a,b){return a.location - b.location});
-        
+        colors.sort(function(a,b){return a.location - b.location});        
         //Fill o.steps based on colors & transp arrays
         var lRange = 4096;//location range   
         var colorStep, transpStep, prevColorStep, prevTranspStep;
@@ -176,17 +182,18 @@ extend(Gradient,{
                 $.writeln("Dude, something went wrong in gradient generation: infinite cycling.");
                 ic++; it++
             }
-        }  
-    
+        }    
         return g;    
     } //end of _createFromRef
-})
+});
 
 
-//Extend color model
+//============================================================Color model
 var Color = function(arg){
     return this._init(arg);
-}
+};
+
+//-------------------------------------------------------------------------------------------------------Color singleton
 extend(Color, {
     //Create new color object
     create : function(arg, opts) {
@@ -210,6 +217,8 @@ extend(Color, {
         }
     }
 });
+
+//--------------------------------------------------------------------------------------------------------Color prototype
 extend(Color.prototype, {
     defaults:{
         mode:'normal',
@@ -283,10 +292,11 @@ extend(Color.prototype, {
 }, GetSetOptions);
 
 
-//Shadow model
+//=========================================================Shadow model
 var Shadow = function(o){
     return this._init(o);
 }
+//----------------------------------------------------------------------------------------------------Shadow prototype
 extend(Shadow.prototype,{
     defaults:{
         isTextShadow:false,
@@ -322,18 +332,107 @@ extend(Shadow.prototype,{
         }
         return self;
     },
-
     //Convert dist & angle to x & y, set them to the model
     angleDistance: function(angle, distance){
         var self = this, o = self.options;
         o.x = Math.round(distance * -Math.cos(angle/180*Math.PI));
         o.y = Math.round(distance * Math.sin(angle/180*Math.PI));
-    }
-    
+    }    
 }, GetSetOptions)
 
 
-//Singletone object of some graphics methods
+
+//=======================================================Shape (path) model
+var Shape = function(o){
+    return this._init(o);
+}
+//-------------------------------------------------------------------------------------------------Shape prorotype
+extend(Shape.prototype, {
+    defaults:{
+        points:null, //array of points
+        isRect:false,
+        isClosed:true,
+        bounds:null, //simple bounds of convex hull of path.
+        encodeBase64: false, //do result encoded
+        fill: null //Fill means - gradient or color maybe
+    },
+    _init: function(o){
+        var self = this;
+        self.options = extend({}, self.defaults, o);
+        if (!self.options.points) self.options.points = [];
+        return self;
+    },
+    //return points in SVG path notation
+    getSVGPath: function(){
+        var self = this, o = self.options;
+        var result = "";
+        return result;
+    },
+    //returns minimal-compiled svg string
+    toSVG: function(){
+        var self = this, o = self.options;
+        var result = "", svg = "<svg xmlns='http://www.w3.org/2000/svg' ";
+        svg += " viewBox='0 0 40 40' height='25' width='25'>"
+        result += "<path fill='#000000' d='"+self.getSVGPath()+"'/>"
+        result += "</svg>";
+        return result;
+    },
+    toCSS: function(){
+        var self = this, o = self.options;
+        var result = "data:image/svg+xml,";
+        result += self.toSVG();
+        return result;        
+    }
+}, GetSetOptions);
+
+
+//-------------------------------------------------------------------------------------------------------Shape singleton
+extend(Shape, {
+    create : function(arg, opts) {
+        if (arg instanceof ActionDescriptor) {//create from actiondescr
+            var rawPoints = arg.getList(s2t("subpathListKey")).getObjectValue(0).getList(s2t("points"));
+            var points = [],
+            minLeft = Number.MAX_VALUE, 
+            minTop = Number.MAX_VALUE, 
+            maxBottom = Number.MIN_VALUE,
+            maxRight = Number.MIN_VALUE;
+            for (var i = 0; i < rawPoints.count; i++){
+                var point = rawPoints.getObjectValue(i);
+                var p = {
+                    smooth: point.getBoolean(s2t("smooth")),
+                    lX: point.getObjectValue(s2t("backward")).getUnitDoubleValue(s2t("horizontal")),
+                    lY: point.getObjectValue(s2t("backward")).getUnitDoubleValue(s2t("vertical")),
+                    rX: point.getObjectValue(s2t("forward")).getUnitDoubleValue(s2t("horizontal")),
+                    rY: point.getObjectValue(s2t("forward")).getUnitDoubleValue(s2t("vertical")),
+                    cX: point.getObjectValue(s2t("anchor")).getUnitDoubleValue(s2t("horizontal")),
+                    cY: point.getObjectValue(s2t("anchor")).getUnitDoubleValue(s2t("vertical"))
+                }
+                points.push(p);
+                maxRight = Math.max(p.cX, maxRight);
+                minLeft = Math.min(p.cX, minLeft);
+                maxBottom = Math.max(p.cY, maxBottom);
+                minTop = Math.min(p.cY, minTop);
+            };
+            var c = new Shape(extend({
+                points: points,
+                bounds:{
+                    top: minTop,
+                    left: minLeft,
+                    bottom: maxBottom,
+                    right: maxRight
+                },
+                isClosed:arg.getList(s2t("subpathListKey")).getObjectValue(0).getBoolean(s2t("closedSubpath"))
+            },opts));
+            return c;
+        } else { //simple create
+            return new Shape(arg);
+        }
+    }
+})
+
+
+
+//=====================================================Graph singleton object - graphics methods
 var Graph = extend({
 //Function that returns result of blending of objA and objB. Object B is ontop of objA.
 applyOverlay : function(objA, objB){
