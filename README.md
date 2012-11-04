@@ -5,7 +5,7 @@
 * _Drop Shadow_, _Outer Glow_, _Inner Shadow_, _Inner Glow_ **⇝** `box-shadow`. **Support of blending modes**: _resulting color corrected to match FX_.
 * _Gradient Overlay_, _Color Overlay_ and layer fill (<em>Gradient</em> or _Solid Color_) **⇝** merged `background`.
 * Recognized rectangles **⇝** `border-radius`, `transform`, `width` and `height`.
-* _Vector Mask_ **⇝** SVG ⇝ `bakcground: url(data:image/svg+xml,…)`.
+* _Vector Mask_ **⇝** SVG in `background: url(data:image/svg+xml,…)`.
 * Pattern fill **⇝** `background: url(data:image/png,…)`
 * _Character_ and _Paragraph_ **⇝** `font-` properties.
 * Multiple selected layers **⇝** composite style.
