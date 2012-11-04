@@ -2,12 +2,12 @@
 # Photoshop extension that makes possible to convert layer style/font properties to CSS
 
 ## Features
-* _Drop Shadow_, _Outer Glow_, _Inner Shadow_, _Inner Glow_ **⇝** `box-shadow`. **Support of blending modes**: _resulting color corrected to match FX_.
+* _Drop Shadow_, _Outer Glow_, _Inner Shadow_, _Inner Glow_ **⇝** `box-shadow`. <br/>**Support of blending modes**: _resulting color corrected to match FX_.
 * _Gradient Overlay_, _Color Overlay_ and layer fill (<em>Gradient</em> or _Solid Color_) **⇝** merged `background`.
 * Recognized rectangles **⇝** `border-radius`, `transform`, `width` and `height`.
 * _Vector Mask_ **⇝** SVG in `background: url(data:image/svg+xml,…)`.
-* Pattern fill **⇝** `background: url(data:image/png,…)`
-* _Character_ and _Paragraph_ **⇝** `font-` properties.
+* _Pattern fill_ **⇝** `background: url(data:image/png,…)`
+* _Character_ and _Paragraph_ **⇝** `font-*` and `text-*`.
 * Multiple selected layers **⇝** composite style.
 * Browser prefixes.
 * Color formats: `rgba`, `hsla`, `hex`.
