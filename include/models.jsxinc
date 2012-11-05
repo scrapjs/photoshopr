@@ -84,6 +84,25 @@ Gradient.prototype =extend({}, {
 
     //Return grad as SVG
     getSVG: function(){
+    },
+    
+    //Make reflection of gradient by position
+    reverse: function(){
+        var self = this, o = self.options, steps = o.steps, range = o.LOCATION_RANGE
+        for (var i = steps.length; i--;){
+            steps[i].location = range - steps[i].location
+        }
+        self._sort();
+        return self;
+    },
+
+    //Ascending sorting by location
+    _sort: function(){
+        var self = this, o = self.options, steps = o.steps;
+        steps.sort(function(a,b){
+            return a.location - b.location;
+        })
+        return self;
     }
 }, GetSetOptions);
 
@@ -179,7 +198,7 @@ extend(Gradient,{
                 });
                 it++;
             } else {
-                $.writeln("Dude, something went wrong in gradient generation: infinite cycling.");
+                $.writeln("Dude, something has gone wrong in gradient generation: infinite cycling.");
                 ic++; it++
             }
         }    
@@ -362,6 +381,13 @@ extend(Shape.prototype, {
         if (!self.options.points) self.options.points = [];
         return self;
     },
+    w:function(arg){
+        if (arg!==undefined) {
+            this.set("width", arg);
+            return this;
+        } else 
+        return this.get("width");
+    },
     //return points in SVG path notation
     getSVGPath: function(){
         var self = this, o = self.options;
@@ -399,14 +425,25 @@ extend(Shape, {
             for (var i = 0; i < rawPoints.count; i++){
                 var point = rawPoints.getObjectValue(i);
                 var p = {
-                    smooth: point.getBoolean(s2t("smooth")),
-                    lX: point.getObjectValue(s2t("backward")).getUnitDoubleValue(s2t("horizontal")),
-                    lY: point.getObjectValue(s2t("backward")).getUnitDoubleValue(s2t("vertical")),
-                    rX: point.getObjectValue(s2t("forward")).getUnitDoubleValue(s2t("horizontal")),
-                    rY: point.getObjectValue(s2t("forward")).getUnitDoubleValue(s2t("vertical")),
                     cX: point.getObjectValue(s2t("anchor")).getUnitDoubleValue(s2t("horizontal")),
                     cY: point.getObjectValue(s2t("anchor")).getUnitDoubleValue(s2t("vertical"))
                 }
+                try { extend(p, {                        
+                        smooth: point.getBoolean(s2t("smooth")),
+                        lX: point.getObjectValue(s2t("backward")).getUnitDoubleValue(s2t("horizontal")),
+                        lY: point.getObjectValue(s2t("backward")).getUnitDoubleValue(s2t("vertical")),
+                        rX: point.getObjectValue(s2t("forward")).getUnitDoubleValue(s2t("horizontal")),
+                        rY: point.getObjectValue(s2t("forward")).getUnitDoubleValue(s2t("vertical")),
+                    })
+                } catch (err){// Not bezier curve, just line to
+                    extend(p, {                        
+                        smooth: false,
+                        lX: p.cX,
+                        lY: p.cY,
+                        rX: p.cX,
+                        rY: p.cY
+                    })
+                };
                 points.push(p);
                 maxRight = Math.max(p.cX, maxRight);
                 minLeft = Math.min(p.cX, minLeft);
@@ -421,6 +458,8 @@ extend(Shape, {
                     bottom: maxBottom,
                     right: maxRight
                 },
+                width: maxRight - minLeft,
+                height: maxBottom - minTop,
                 isClosed:arg.getList(s2t("subpathListKey")).getObjectValue(0).getBoolean(s2t("closedSubpath"))
             },opts));
             return c;
@@ -435,30 +474,32 @@ extend(Shape, {
 //=====================================================Graph singleton object - graphics methods
 var Graph = extend({
 //Function that returns result of blending of objA and objB. Object B is ontop of objA.
-applyOverlay : function(objA, objB){
+applyOverlay : function(objA, objB, mode){
     var a = "C", b = "C";    
     if (objA instanceof Gradient) a = "G";
     if (objB instanceof Gradient) b = "G";
-    var result = this["apply"+a+b+"Overlay"](objA, objB);
+    var result = this["apply"+a+b+"Overlay"](objA, objB, mode);
     return result;
 },
 //color over color
-applyCCOverlay : function(colorA, colorB){
+applyCCOverlay : function(colorA, colorB, mode){
+    mode = mode || colorB.get("mode");
     //Reslt of overlay is a mix of blended top layer and bottom origin layer leveraged by opacity-midpoint.
-    return this.proccessBlend[colorB.get("mode")](colorA, colorB);
+    return this.proccessBlend[mode](colorA, colorB);
 },
 //color over gradient
-applyGCOverlay : function(grad, color){
+applyGCOverlay : function(grad, color, mode){
     var steps = grad.get("steps");
+    mode = mode || color.get("mode");
     for (var i = 0; i < steps.length; i++){
         step = steps[i];
-        step.color = this.proccessBlend[color.get("mode")](step.color, color);
+        step.color = this.proccessBlend[mode](step.color, color);
     }; //TODO: check if we could optimize gradient by abandoning redundant colors 
     return grad;
 },
 //gradient over color
-applyCGOverlay : function(color, grad){
-    var steps = grad.get("steps"), mode = grad.get("mode");
+applyCGOverlay : function(color, grad, mode){
+    var steps = grad.get("steps"), mode = mode || grad.get("mode");
     for (var i = 0; i < steps.length; i++){
         var step = steps[i];
         step.color.a(grad.options.opacity/100 * step.color.a());
@@ -467,13 +508,69 @@ applyCGOverlay : function(color, grad){
     return grad;
 },
 //gradient over gradient
-applyGGOverlay : function(gradA, gradB){
-    var steps = grad.get("steps"), mode = grad.get("mode");
-    for (var i = 0; i < steps.length; i++){
+applyGGOverlay : function(gradA, gradB, mode){
+    if ((gradA.get("angle")+360)%180 == (gradB.get("angle")+360)%180) {
+        // If equal angles or contraverse angles - do gradient;
+        var stepsA = gradA.get("steps");
+        var stepsB = gradB.get("steps");
+        var mode = mode || gradB.get("mode");
+        var opacityA = gradA.get("opacity"), opacityB = gradB.get("opacity");
+        var grad = new Gradient({
+            angle: gradB.get("angle")
+        });
+        if (Math.abs(gradA.get("angle") - gradB.get("angle")) % 360 == 180){//if different directions
+            stepsA = gradA.reverse().get("steps");
+        }
+        if (gradA.get("reversed")) stepsA = gradA.reverse().get("steps");
+        if (gradB.get("reversed")) stepsB = gradB.reverse().get("steps");
+        var steps = grad.get("steps");
+        var stoppr = 120;
+        var stepA, stepB, prevStepA, prevStepB;
+        for (var ia = 0, ib = 0; ia<stepsA.length || ib<stepsB.length && stoppr--;){
+            stepB = stepsB[ib] || {location : 100, color : stepB.color}; //end limiter B
+            prevStepB = stepsB[ib-1] || {location : 0, color : stepB.color}; //start limiter B
+            stepA = stepsA[ia] || {location : 100, color : stepA.color}; //end limiter A
+            prevStepA = stepsA[ia-1] || {location : 0, color : stepA.color}; //start limiter A            
+            if (Math.abs( stepB.location - stepA.location ) < 1) {//A==B
+                steps.push({
+                    location: stepB.location,
+                    color: Graph.applyOverlay(stepA.color.applyOpacity(opacityA), stepB.color.applyOpacity(opacityB), mode)
+                });
+                ia++; ib++;
+            } else if (stepB.location < stepA.location){//B
+                steps.push({
+                    location: stepB.location,
+                    color: Graph.applyOverlay(
+                    Graph.getMidColor( prevStepA.color, stepA.color, (stepB.location - prevStepA.location)/(stepA.location - prevStepA.location)).applyOpacity(opacityA),
+                    stepB.color.applyOpacity(opacityB),
+                    mode)
+                });
+            ib++;
+            } else if (stepB.location > stepA.location ) {//A
+                steps.push({
+                    location: stepA.location,
+                    color: Greph.applyOverlay(
+                    stepA.color.applyOpacity(opacityA),
+                    Graph.getMidColor(prevStepB.color, stepB.color, (stepA.location - prevStepB.location)/(stepB.location - prevStepB.location)).applyOpacity(opacityB),
+                    mode)
+                });
+                ia++;
+            } else {
+                $.writeln("Dude, something went wrong in GG overlay: infinite cycling.");
+                ib++; ia++
+            }
+        }
+        return grad;
+    } else {
+        // If angles not equal - do bitmap
+    }
+    
+    
+    /*for (var i = 0; i < steps.length; i++){
         step = steps[i];
         step.color = this.proccessBlend[mode](step.color, color);
-    }; //TODO: check if we could optimize gradient by abandoning redundant colors 
-    return gradB
+    };*/ //TODO: check if we could optimize gradient by abandoning redundant colors 
+    return gradB;
 },
 
 //Object with blend modes proccessings
@@ -654,12 +751,13 @@ proccessBlend : {
 //Return color between A & B
 getMidColor : function (colorA, colorB, midpoint) {
      var self = this,
-    colorObj = new SolidColor();
+    color = new Color();
     midpoint = midpoint || .5;
     midpoint = self.max(self.min(midpoint, 1), 0);
-    colorObj.rgb.red = self.mid( colorA.rgb.red, colorB.rgb.red, midpoint );
-    colorObj.rgb.green = self.mid( colorA.rgb.green, colorB.rgb.green, midpoint );
-    colorObj.rgb.blue = self.mid( colorA.rgb.blue, colorB.rgb.blue, midpoint );
+    color.r(self.mid( colorA.r(), colorB.r(), midpoint ));
+    color.g(self.mid( colorA.g(), colorB.g(), midpoint ));
+    color.b(self.mid( colorA.b(), colorB.b(), midpoint ));
+    color.a(self.mid( colorA.a(), colorB.a(), midpoint ))
     return colorObj;
 },
 //Return value between a & b based on leverage.

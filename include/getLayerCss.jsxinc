@@ -48,12 +48,12 @@ extend(P, {
            return '';
         }
         self.lKind = self.layer.kind,
-        self.lOpacity,
-        self.lFill,
-        self.lMode,
+        self.lOpacity = self.layer.opacity,
+        self.lFill = self.layer.fillOpacity,
+        self.lMode = self.layer.mode,
         self.lVisible,
         self.lText,
-        self.lShape;               
+        self.lShape;    
         return self;
     },
     
@@ -62,6 +62,8 @@ extend(P, {
     //Main parse function: parses everything in accordance with type of selected layer
     parseCSSModel: function(){     
         var self = this, o = self.settings;
+        
+        //TODO: think about layer blending mode itself. Probably needed to insert the most bottom background to merge with.
         switch (self.lKind){
             case LayerKind.SOLIDFILL:
                 self.parseSolidFill();
@@ -74,10 +76,14 @@ extend(P, {
                 break;
             case LayerKind.NORMAL:
             case LayerKind.PATTERNFILL:
+                //Parse sprite, if needed
                 self.parseBMP();
-            default: //There is effects layer. IDK what to do here.                    
+                break;
+            default:
+                //TODO: there is effect layer. Presumably, merge this down and copy sprite  or just parse size, opacity, fx etc
+                return self;
         };
-        self.parseShape();
+        self.parseVectorMask();
         if (self.lFX) self.parseFx();
         self.parseOpacity();
         return self;        
@@ -107,13 +113,64 @@ extend(P, {
         try { 
             var colr = Color.create(
             self.lContent.getList(s2t('adjustment')).getObjectValue(0).getObjectValue(s2t('color')),
-            {opacity: self.layer.fillOpacity});
-            if (P.settings.comments) colr.set("comment", "Color fill layer");
+            {
+                opacity: self.layer.fillOpacity,
+                mode: self.lMode
+            });
+            if (P.settings.comments) colr.set("comment", "Solid Color fill layer");
             self.cssModel.background.push(colr);
         }        
-        catch (err) {$.writeln("I Can't grab solid fill color in parseSolidFill")}
+        catch (err) {self.cssModel.background.push("I can't grab solid fill color")}
         return self;
     },
+
+
+
+    //Make model of gradient-fill-layer properties
+    parseGradientFill : function(){
+        var self = this, l = self.layer;
+        self.lContent = self.getActiveLayerDescriptor(s2t( "contentLayer" ));        
+        //try {
+            var rawDesc =self.lContent.getList(s2t("adjustment")).getObjectValue(0);
+            var gradDesc = rawDesc.getObjectValue(s2t("gradient"));
+            var type = t2s(rawDesc.getEnumerationValue(s2t("type"))),           
+            angle = rawDesc.getUnitDoubleValue(s2t('angle'));
+            var reverse = false;
+            try { reverse = rawDesc.getBoolean(s2t("reverse"));} catch (err) {};
+            var grad = Gradient.create(gradDesc, {
+                opacity: self.lFill,
+                mode: self.lMode,
+                reversed: reverse
+            });
+            switch(type){
+                case "radial":
+                    grad.set("type", "radial");
+                    break;
+                case "angle":
+                    //Get out
+                    grad.set("type", "angle");
+                    break;
+                case "reflected":
+                    //do 2 linears
+                    grad.set("type", "reflected");
+                    break;
+                case "diamond":
+                    //Omg gtfo
+                    grad.set("type", "diamond");
+                    break;
+                default: //supposed to be linear
+                    grad.set({
+                        type: "linear", 
+                        angle: angle
+                    });
+            }            
+            if (P.settings.comments) grad.set("comment", "Gradient fill layer");
+            self.cssModel.background.push(grad);
+        //}        
+        //catch (err) {self.cssModel.background.push("I can't grab gradient fill.")}
+        return self;
+    },
+
     
     //Just defines an opacity of layer that will be applied to css, in case of text layer.
     parseOpacity : function(){
@@ -123,7 +180,7 @@ extend(P, {
     },
 
     //Parse shape: if rectangle, make border-radius & padding.
-    parseShape : function(){
+    parseVectorMask : function(){
         var self = this, l = self.layer, multishape = false;
         
         //Create shape model
@@ -138,8 +195,7 @@ extend(P, {
         var shape = Shape.create(shapesList.getObjectValue(0));
         if (multishape) self.historyStep(-1); //return combining path to initial state
         
-        //log(self.layer.bounds);        
-        log(shape.get("isRect"))
+        //log(self.layer.bounds);
         
         //TODO: define, is it rect? no? path?
     
@@ -172,12 +228,6 @@ extend(P, {
 
 
     parseSize : function(){
-    },
-
-
-
-     //Make model of gradient-fill-layer properties
-    parseGradientFill : function(){
     },
 
 
@@ -560,6 +610,7 @@ extend(P, {
 
     //Merge backgorunds to one through blend modes
     renderMergedBackground: function(prefix){
+        //TODO: make the most bottom background first (below layer itself, if layer's fill not 100)
         var self = this, o = self.settings, result = "",
         delim = self.DELIM, 
         bgs = self.cssModel["background"];
@@ -568,6 +619,7 @@ extend(P, {
         prefix = prefix || "";
         var resObj = bgs[bgs.length-1];
         for (var i = bgs.length-1; i--;){
+            //TODO: possible case if 2 gradients has different angle
             resObj = Graph.applyOverlay(bgs[i], resObj);
         }
         result += resObj.toCSS(prefix) + ';\n';

@@ -139,8 +139,15 @@ var log = function(arg){
     } else if (typeof arg == "string" || 
                 typeof arg == "boolean" || 
                 typeof arg == "number" ||
-                typeof arg == "int") {
+                typeof arg == "int" ||
+                typeof arg == "double" ||
+                typeof arg == "real" ||
+                arg === undefined) {
         $.writeln(level()+arg);
+    } else if (arg instanceof Array) {
+        for (var i = 0; i< arg.length; i++){
+            log(arg[i]);
+        }
     } else {
         var obj = arg;
         for (var k in obj.reflect.properties){
