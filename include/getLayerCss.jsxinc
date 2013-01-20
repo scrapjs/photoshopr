@@ -362,7 +362,7 @@ extend(P, {
             spread = fxProp.getUnitDoubleValue(s2t("chokeMatte")), 
             blur = fxProp.getUnitDoubleValue(s2t("blur"));   
             if (!enabled) return;
-            var mode = fxProp.getEnumerationValue(s2t("mode"));
+            var mode = t2s(fxProp.getEnumerationValue(s2t("mode")));
             var color = Color.create(colorRef, { opacity : opacity, mode: t2s(mode)});
             color.set("mode", mode);
             //get global light angle
@@ -573,7 +573,7 @@ extend(P, {
         var self = this, cssStr = "", css = self.cssModel, 
         c = P.settings.comments;        
         cssStr += self.renderBackground();
-        cssStr += self.renderBoxShadows();
+        cssStr += self.renderBoxShadows(); //rendering of box-shadow depends on background rendering
         if (css['opacity'] != 1) cssStr += "opacity: " + (self.cssModel.opacity).toFixed(2).slice(1) + ";\n";
         cssStr += self.renderSize();
         if (self.lKind == LayerKind.TEXT) cssStr += self.renderText();
@@ -622,6 +622,7 @@ extend(P, {
             //TODO: possible case if 2 gradients has different angle
             resObj = Graph.applyOverlay(bgs[i], resObj);
         }
+        self.cssModel.background = [resObj]; //to reuse
         result += resObj.toCSS(prefix) + ';\n';
         return result;
     },
@@ -642,7 +643,7 @@ extend(P, {
     },
 
 
-    //Returns css box shadows 
+    //Returns css box shadows.
     renderBoxShadows: function(){
         var self = this, o = self.settings, css = self.cssModel,  result = "";
         if (o.showPrefixes){
@@ -650,8 +651,7 @@ extend(P, {
                 result += self.renderBoxShadow(self.prefixes[i]);
             }
         }
-        result += self.renderBoxShadow();
-        
+        result += self.renderBoxShadow();        
         return result;
     },   
 
@@ -661,12 +661,36 @@ extend(P, {
         if (!css['box-shadow'].length) return "";
         prefix = prefix || "";
         result += prefix + "box-shadow:"+ delim;
+        var prevShad;
         for (var i = css['box-shadow'].length; i--;){
-            if (css['box-shadow'][i]) result += css['box-shadow'][i].toCSS() + "," + delim;
+            if (css['box-shadow'][i]) {
+                if (css['box-shadow'][i+1]) prevShad = css['box-shadow'][i+1];
+                var mergedShadow = self.mergeBoxShadow(css['box-shadow'][i], prevShad);
+                result += mergedShadow.toCSS() + "," + delim;
+            }
         }
         result = result.substr (0, result.length-2) + ';\n';
         return result;
     },
+
+    //Return new box shadow, merged with background & prevShadow, if it applicable
+    mergeBoxShadow: function(shad, prevShad){
+        var self = this, bg = self.cssModel.background[0],
+        color = shad.get("color");
+        if (bg instanceof Gradient) {
+            //TODO: cet the most correct color
+            bg = bg.average();
+        }
+        if (prevShad && (prevShad.get("isInset") == shad.get("isInset"))) {
+            //TODO: Test if current shadow overlaps shadow below
+            bg = Graph.applyOverlay(bg, prevShad, {mode: prevShad.mode, noAlpha: true});
+        }
+        //TODO: exclude opacity from mixing here
+        color = Graph.applyOverlay(bg, color, {mode:shad.mode, noAlpha:true});
+        
+        return shad;
+    },
+
     
     //Render full text properties
     renderText : function(){

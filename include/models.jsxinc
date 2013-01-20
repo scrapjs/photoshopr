@@ -103,6 +103,24 @@ Gradient.prototype =extend({}, {
             return a.location - b.location;
         })
         return self;
+    },
+
+    //Return average color of gradient
+    average: function(){
+        var self = this, o = self.options, steps = o.steps;
+        var average= new Color(), sr=0,sg=0,sb=0,sa=0;
+        var nSteps = steps.length;
+        for (var i = nSteps; i--;){
+            sr += steps.color.r();
+            sg += steps.color.g();
+            sb += steps.color.b();
+            sa += steps.color.a();
+        }
+        average.r(sr/nSteps);
+        average.g(sg/nSteps);
+        average.b(sb/nSteps);
+        average.a(o.opacity*.01*sa/nSteps);        
+        return average;
     }
 }, GetSetOptions);
 
@@ -325,7 +343,6 @@ extend(Shadow.prototype,{
         stroke:0,
         blur:0,
         color:null,
-        opacity: 100,
         comment: ""
     },
     _init: function(o){
@@ -474,46 +491,49 @@ extend(Shape, {
 //=====================================================Graph singleton object - graphics methods
 var Graph = extend({
 //Function that returns result of blending of objA and objB. Object B is ontop of objA.
-applyOverlay : function(objA, objB, mode){
-    var a = "C", b = "C";    
+//Possible params: mode, noAlpha
+applyOverlay : function(objA, objB, params){
+    var a = "C", b = "C";
+    params = extend({noAlpha:false}, params); //noAlpha - to do or not alpha-blending
     if (objA instanceof Gradient) a = "G";
     if (objB instanceof Gradient) b = "G";
-    var result = this["apply"+a+b+"Overlay"](objA, objB, mode);
+    var result = this["apply"+a+b+"Overlay"](objA, objB, params);
     return result;
 },
 //color over color
-applyCCOverlay : function(colorA, colorB, mode){
-    mode = mode || colorB.get("mode");
+applyCCOverlay : function(colorA, colorB, params){
+    params.mode = params.mode || colorB.get("mode");
     //Reslt of overlay is a mix of blended top layer and bottom origin layer leveraged by opacity-midpoint.
-    return this.proccessBlend[mode](colorA, colorB);
+    return this.proccessBlend[params.mode](colorA, colorB, params.noAlpha);
 },
 //color over gradient
-applyGCOverlay : function(grad, color, mode){
+applyGCOverlay : function(grad, color, params){
     var steps = grad.get("steps");
-    mode = mode || color.get("mode");
+    params.mode = params.mode || color.get("mode");
     for (var i = 0; i < steps.length; i++){
         step = steps[i];
-        step.color = this.proccessBlend[mode](step.color, color);
+        step.color = this.proccessBlend[params.mode](step.color, color, params.noAplha);
     }; //TODO: check if we could optimize gradient by abandoning redundant colors 
     return grad;
 },
 //gradient over color
-applyCGOverlay : function(color, grad, mode){
-    var steps = grad.get("steps"), mode = mode || grad.get("mode");
+applyCGOverlay : function(color, grad, params){
+    var steps = grad.get("steps");
+    params.mode = params.mode || grad.get("mode");
     for (var i = 0; i < steps.length; i++){
         var step = steps[i];
         step.color.a(grad.options.opacity/100 * step.color.a());
-        step.color = this.proccessBlend[mode](color, step.color);
+        step.color = this.proccessBlend[params.mode](color, step.color, params.noAlpha);
     }; //TODO: check if we could optimize gradient by abandoning redundant colors 
     return grad;
 },
 //gradient over gradient
-applyGGOverlay : function(gradA, gradB, mode){
+applyGGOverlay : function(gradA, gradB, params){
     if ((gradA.get("angle")+360)%180 == (gradB.get("angle")+360)%180) {
         // If equal angles or contraverse angles - do gradient;
         var stepsA = gradA.get("steps");
         var stepsB = gradB.get("steps");
-        var mode = mode || gradB.get("mode");
+        var mode = params.mode || gradB.get("mode");
         var opacityA = gradA.get("opacity"), opacityB = gradB.get("opacity");
         var grad = new Gradient({
             angle: gradB.get("angle")
@@ -534,7 +554,7 @@ applyGGOverlay : function(gradA, gradB, mode){
             if (Math.abs( stepB.location - stepA.location ) < 1) {//A==B
                 steps.push({
                     location: stepB.location,
-                    color: Graph.applyOverlay(stepA.color.applyOpacity(opacityA), stepB.color.applyOpacity(opacityB), mode)
+                    color: Graph.applyOverlay(stepA.color.applyOpacity(opacityA), stepB.color.applyOpacity(opacityB), {mode: mode})
                 });
                 ia++; ib++;
             } else if (stepB.location < stepA.location){//B
@@ -543,7 +563,7 @@ applyGGOverlay : function(gradA, gradB, mode){
                     color: Graph.applyOverlay(
                     Graph.getMidColor( prevStepA.color, stepA.color, (stepB.location - prevStepA.location)/(stepA.location - prevStepA.location)).applyOpacity(opacityA),
                     stepB.color.applyOpacity(opacityB),
-                    mode)
+                    {mode: mode})
                 });
             ib++;
             } else if (stepB.location > stepA.location ) {//A
@@ -552,7 +572,7 @@ applyGGOverlay : function(gradA, gradB, mode){
                     color: Greph.applyOverlay(
                     stepA.color.applyOpacity(opacityA),
                     Graph.getMidColor(prevStepB.color, stepB.color, (stepA.location - prevStepB.location)/(stepB.location - prevStepB.location)).applyOpacity(opacityB),
-                    mode)
+                    {mode:mode})
                 });
                 ia++;
             } else {
@@ -586,42 +606,42 @@ proccessBlend : {
         c.b( (cb.b() * cb.a() + ca.b() * (1 - cb.a()) * ca.a()) / c.a() );
         return c;
     },
-    "darken" : function(){
+    "darken" : function(ca, cb, noAlpha){
         var c = new Color();
         c.a(cb.a());
         c.r( Math.min(cb.r() , ca.r() ));
         c.g( Math.min(cb.g() , ca.g() ));
         c.b( Math.min(cb.b() , ca.b() ));
-        return this.normal(ca, c);
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "multiply" : function(ca ,cb){
+    "multiply" : function(ca ,cb, noAlpha){
         var mult = function(base, adj) { return ((base * adj) / 255); }
         var c = new Color();
         c.a(cb.a());
         c.r( mult(ca.r() , cb.r() ) );
         c.g( mult(ca.g(), cb.g() ) );
         c.b( mult(ca.b(), cb.b() ) );
-        return this.normal(ca, c);
+        return noAlpha ? c : this.normal(ca, c);
     },    
-    "colorBurn" : function(ca, cb){
+    "colorBurn" : function(ca, cb, noAlpha){
         var cburn = function(base, adj) { return adj <= 0 ? 0 : Math.max(255 - ((255 - base) * 255 / adj), 0); }
         var c = new Color();
         c.a(cb.a());
         c.r( cburn(ca.r() , cb.r() ) );
         c.g( cburn(ca.g(), cb.g() ) );
         c.b( cburn(ca.b(), cb.b() ) );
-        return this.normal(ca, c);
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "linearBurn" : function(ca, cb){
+    "linearBurn" : function(ca, cb, noAlpha){
         var c = new Color();
         var burn = function(base, adj) { return Math.max(0, (base + adj - 255)); }
         c.a(cb.a());
         c.r( burn(ca.r(), cb.r()) );
         c.g( burn(ca.g(), cb.g()) );
         c.b( burn(ca.b(), cb.b()) );        
-        return this.normal(ca, c);
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "darkerColor" : function(ca, cb){
+    "darkerColor" : function(ca, cb, noAlpha){
         var c = new Color();
         c.a(cb.a());
         if ( cb.r() * 0.3 + cb.g() * 0.59 + cb.b() * 0.11 > 
@@ -630,121 +650,139 @@ proccessBlend : {
             c.g(ca.g());
             c.b(ca.b());
         };
-        return this.normal(ca, c);        
+        return noAlpha ? c : this.normal(ca, c);
     },
 
-    "lighten" : function(ca, cb){
+    "lighten" : function(ca, cb, noAlpha){
         var lighten = function(base, adj) { return Math.max(base, adj); }
         var c = new Color();
         c.a(cb.a());
         c.r( lighten(ca.r() , cb.r() ) );
         c.g( lighten(ca.g(), cb.g() ) );
         c.b( lighten(ca.b(), cb.b() ) );
-        return this.normal(ca, c);
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "screen" : function(ca, cb){
+    "screen" : function(ca, cb, noAlpha){
         var screen = function(base, adj) { return (255 - (((255 - base) * (255 - adj)) / 255)); }
         var c = new Color();
         c.a(cb.a());
         c.r( screen(ca.r() , cb.r() ) );
         c.g( screen(ca.g(), cb.g() ) );
         c.b( screen(ca.b(), cb.b() ) );
-        return this.normal(ca, c);
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "colorDodge" : function(ca, cb){
+    "colorDodge" : function(ca, cb, noAlpha){
         var cdodge = function(base, adj) { return adj >= 255 ? 255 : Math.min(base * 255 / (255 - adj), 255); }
         var c = new Color();
         c.a(cb.a());
         c.r( cdodge(ca.r() , cb.r() ) );
         c.g( cdodge(ca.g(), cb.g() ) );
         c.b( cdodge(ca.b(), cb.b() ) );
-        return this.normal(ca, c);
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "linearDodge" : function(ca,cb){
+    "linearDodge" : function(ca,cb,noAlpha){
         var ldodge = function(base, adj) { return Math.min((base + adj), 255); }
         var c = new Color();
         c.a(cb.a());
         c.r( ldodge(ca.r() , cb.r() ) );
         c.g( ldodge(ca.g(), cb.g() ) );
         c.b( ldodge(ca.b(), cb.b() ) );
-        return this.normal(ca, c);
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "lighterColor" : function(){
+    "lighterColor" : function(ca, cb, noAlpha){
+        var c = new Color();
+        return noAlpha ? c : this.normal(ca, c);
     },
 
-    "overlay" : function(ca,cb){
+    "overlay" : function(ca,cb, noAlpha){
         var c = new Color();
         var overlay = function(base, adj) { return (base < 128) ? ((2 * base * adj) / 255) : (255 - (2 * (255 - base) * (255 - adj) / 255)); }      
         c.a(cb.a());
         c.r( overlay(ca.r(), cb.r()) );
         c.g( overlay(ca.g(), cb.g()) );
         c.b( overlay(ca.b(), cb.b()) );
-        return this.normal(ca, c);
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "softLight" : function(ca, cb){
+    "softLight" : function(ca, cb, noAlpha){
         var c = new Color();
         var softlight = function(base, adj) { return (base < 128) ? (((adj>>1) + 64) * base * (2/255)) : (255 - (191 - (adj>>1)) * (255 - base) * (2 / 255)); }
         c.a(cb.a());
         c.r( softlight(ca.r(), cb.r()) );
         c.g( softlight(ca.g(), cb.g()) );
         c.b( softlight(ca.b(), cb.b()) );
-        return this.normal(ca, c);
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "hardLight" : function(ca, cb){
+    "hardLight" : function(ca, cb, noAlpha){
         var hlight = function() {return adj < 128 ? (2 * base * adj) / 255 : 255 - ((2 * (255 - base) * (255 - adj)) / 255)};
         var c = new Color();
         c.a(cb.a());
         c.r( hlight(ca.r(), cb.r()) );
         c.g( hlight(ca.g(), cb.g()) );
         c.b( hlight(ca.b(), cb.b()) );
-        return this.normal(ca, c);
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "vividLight" : function(){
+    "vividLight" : function(ca, cb, noAlpha){        
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "linearLight" : function(){
+    "linearLight" : function(ca, cb, noAlpha){
+        var c = new Color();
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "pinLight" : function(){
+    "pinLight" : function(ca, cb, noAlpha){
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "hardMix" : function(){
+    "hardMix" : function(ca, cb, noAlpha){
+        return noAlpha ? c : this.normal(ca, c);
     },
 
-    "difference" : function(ca, cb){
+    "difference" : function(ca, cb, noAlpha){
         var diff = function(base, adj) { return Math.abs(base - adj); }
         var c = new Color();
         c.a(cb.a());
         c.r( diff(ca.r(), cb.r()) );
         c.g( diff(ca.g(), cb.g()) );
         c.b( diff(ca.b(), cb.b()) );
-        return this.normal(ca, c);
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "exclusion" : function(ca, cb){
+    "exclusion" : function(ca, cb, noAlpha){
         var excl = function(base, adj) { return 255 - (((255 - base) * (255 - adj) / 255) + (base * adj / 255));}
         var c = new Color();
         c.a(cb.a());
         c.r( excl(ca.r(), cb.r()) );
         c.g( excl(ca.g(), cb.g()) );
         c.b( excl(ca.b(), cb.b()) );
-        return this.normal(ca, c);
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "subtract" : function(ca, cb){
+    "subtract" : function(ca, cb, noAlpha){
         var sub = function(base, adj) { return Math.max((base - adj), 0); }
         var c = new Color();
         c.a(cb.a());
         c.r( sub(ca.r(), cb.r()) );
         c.g( sub(ca.g(), cb.g()) );
         c.b( sub(ca.b(), cb.b()) );
-        return this.normal(ca, c);
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "divide" : function(){
+    "divide" : function(ca, cb, noAlpha){      
+        var c = new Color();
+        return noAlpha ? c : this.normal(ca, c);
     },
 
-    "hue" : function(){
+    "hue" : function(ca, cb, noAlpha){   
+        var c = new Color();
+        return noAlpha ? c : this.normal(ca, c);
+
     },
-    "saturation" : function(){
+    "saturation" : function(ca, cb, noAlpha){     
+        var c = new Color();
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "color" : function(){
+    "color" : function(ca, cb, noAlpha){        
+        var c = new Color();
+        return noAlpha ? c : this.normal(ca, c);
     },
-    "luminosity" : function(){
+    "luminosity" : function(ca, cb, noAlpha){      
+        var c = new Color();
+        return noAlpha ? c : this.normal(ca, c);
     }
 },
     

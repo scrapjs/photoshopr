@@ -16,14 +16,14 @@ dlg.frameLocation = [400,160];
 dlg.size = [ow, oh];
 
 //Formatting panel
-dlg.fp = dlg.add('panel', undefined, 'Rendering');
+dlg.fp = dlg.add('panel', undefined, 'Resulting CSS');
 dlg.fp.bounds = {x:pl, width:w1, y:pt, height:lh*4+pt*2+pb+d};
 //show prefixes
 var top = 0;
 dlg.fp.sp = dlg.fp.add('checkbox', undefined, 'Show browser prefixes');
 dlg.fp.sp.bounds = {x:pl, y : top+=d, width:w1, height:h};
 dlg.fp.sp.value = P.settings.showPrefixes;
-dlg.fp.sp.helpTip = "To make browser prefixes or not.\nSupported prefixes: \n-webkit-, -moz-, -ms-, -o-";
+dlg.fp.sp.helpTip = "Make browser prefixes or not.\nSupported prefixes: \n-webkit-, -moz-, -ms-, -o-";
 //wrap lines
 dlg.fp.wl = dlg.fp.add('checkbox', undefined, 'Wrap lines');
 dlg.fp.wl.bounds = {x:pl, y : top+=lh, width:w1, height:h};
@@ -97,7 +97,7 @@ switch (P.settings.colorFormat) {
 }
 
 //Interface
-dlg.intf = dlg.add('panel', undefined, 'Interface');
+dlg.intf = dlg.add('panel', undefined, 'Way of performing');
 dlg.intf.bounds = {x:pl, width:w1, y:dlg.cf.bounds.bottom + pt, height:lh*3+d+pb+d};
 top = 0;
 //bind to copy fx

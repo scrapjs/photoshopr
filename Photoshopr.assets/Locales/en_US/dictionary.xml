@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <asf locale="en_US" version="1.0" xmlns="http://ns.adobe.com/asf">
+  <str name="Configurator/ActionScript/Action/desc###24" translate="yes">
+    <val>Run Photoshop action</val>
+  </str>
+  <str name="Configurator/ActionScript/Action/name###23" translate="yes">
+    <val>Action</val>
+  </str>
+  <str name="Configurator/ActionScript/Script/desc###29" translate="yes">
+    <val>Run JavaScript</val>
+  </str>
+  <str name="Configurator/ActionScript/Script/name###28" translate="yes">
+    <val>Script</val>
+  </str>
   <str name="Configurator/ActionScript/ScriptFile/desc###10" translate="yes">
     <val>Run JavaScript File</val>
   </str>
@@ -45,7 +57,13 @@
   <str name="Configurator/Attribute/visible/value###22" translate="yes">
     <val>True</val>
   </str>
+  <str name="Configurator/Attribute/visible/value###25" translate="yes">
+    <val>True</val>
+  </str>
   <str name="Configurator/Attribute/visible/value###3" translate="yes">
+    <val>True</val>
+  </str>
+  <str name="Configurator/Attribute/visible/value###30" translate="yes">
     <val>True</val>
   </str>
   <str name="Configurator/Attribute/visible/value###7" translate="yes">
@@ -59,6 +77,12 @@
   </str>
   <str name="Configurator/key_###20" translate="yes">
     <val>C:\Users\dmitry\Dropbox\dmitry-ivanov.me\public_html\playground\photoshopr\settingsPanel.jsx</val>
+  </str>
+  <str name="Configurator/key_###26" translate="yes">
+    <val/>
+  </str>
+  <str name="Configurator/key_###27" translate="yes">
+    <val/>
   </str>
   <str name="Configurator/key_###4" translate="yes">
     <val>C:\Users\dmitry\Dropbox\dmitry-ivanov.me\public_html\playground\photoshopr\copyFx.jsx</val>
