@@ -1,0 +1,12 @@
+markdown: kramdown
+
+permalink: none
+server: true
+url: http://localhost:4000
+base_url: /
+
+source: .
+destination: ./_site
+
+name: Photoshopr
+description: A collection of must-have photoshop extensions

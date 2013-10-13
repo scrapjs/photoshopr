@@ -1,0 +1,20 @@
+---
+layout: base
+---
+
+<a href="/" class="site-name" title="{{ site.description }}">
+	{{ site.name }}
+	<span class="site-tagline">{{ site.description }}</span>
+</a>
+
+<nav class="aside-nav">
+	{% for category in site.categories %}
+	<a href="/section/{{ category[0] }}" class="aside-nav-link"><i class="icon-{{ category[0] }}"></i> {{ category[0] }}</a>
+	{% endfor %}
+</nav>
+
+<section class="page-content">
+{% for item in site.posts %}
+	{% include item.tpl %}
+{% endfor %}
+</section>
