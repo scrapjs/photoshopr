@@ -71,16 +71,20 @@ hr{
 	}
 
 /* ---------------------- Items */
+	.item-box{
+		padding: 0 40px 0 0;
+		float: left;
+	}
 	.item{
-		padding: 0px 0 40px;
+		padding: 0px 0 0px;
 		position: relative;
 		height: 320px;
+		width: 300px;
 	}
 
 	.item-preview{
 		display: block;
-		margin: 0 17px 0;
-		width: 300px;
+		margin: 0 0 0;
 		height: 220px;
 		border-radius: 16px;
 		position: relative;
@@ -122,7 +126,7 @@ hr{
 
 	.item-caption{
 		width: 300px;
-		margin: 12px 20px 0;
+		margin: 12px 2px 0;
 		padding: 0 20px 0 0px;
 	}
 
@@ -163,16 +167,11 @@ hr{
 
 
 /* items grid */
-	.item-box{
-		/*outline: 1px dotted #fafafa;*/
-		float: left;
-		width: 100%;
-	}
 	.page-content{
-		padding-top: 10px;
+		padding-top: 0px;
 		margin-left: 160px;
 	}
-	@media (max-width: 640px){
+	@media (max-width: 480px){
 		.page-content{
 			margin-left: 0;
 		}
@@ -181,22 +180,6 @@ hr{
 			width: auto;
 		}
 	}
-	@media (min-width: 800px){
-		.item-box{
-			width: 50%;
-		}
-	}
-	@media (min-width: 1280px){
-		.item-box{
-			width: 33.3%;
-		}
-		.page-content{
-			max-width: 1024px;
-			margin: 0 auto;
-		}
-	}
-
-
 /* ------------- Icons */
 i:after{
 	display: inline-block;
