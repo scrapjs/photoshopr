@@ -1,7 +1,11 @@
-﻿#include "include/debug.jsxinc"
-#include "include/util.jsxinc"
-#include "include/models.jsxinc"
-#include "include/photoshopr.jsxinc"
+﻿#include "../include/debug.jsxinc"
+#include "../lib/graphics.js"
+//#include "include/util.jsxinc"
+//#include "include/models.jsxinc"
+//#include "include/photoshopr.jsxinc"
+log(G);
+var c = new G.Color("333");
+log (c.toJSON("hsla"));
 
 //TODO: 
 /*

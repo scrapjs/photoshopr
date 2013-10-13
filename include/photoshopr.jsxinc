@@ -3,9 +3,10 @@
 
 
 //Main class. There's app settings, environment, utils and so on.
-var Photoshopr = function(){
+function Photoshopr(){
     this._init();
 }
+
 Photoshopr.prototype = {
     //Default settings
     settings : {

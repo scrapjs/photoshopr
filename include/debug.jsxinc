@@ -128,7 +128,7 @@ var showReference = function (ref) {
 }
 
 //Main logger function. USE THIS like log(anything)
-var log = function(arg){
+function log(arg){
     logLevel ++;
     if (arg instanceof ActionDescriptor) {        
         $.writeln(level()+"ActionDescriptor:");
@@ -160,3 +160,5 @@ var log = function(arg){
     }
     logLevel--;
 }
+
+(1,eval)('this').console = {log:log}
