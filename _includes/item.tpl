@@ -21,7 +21,7 @@
 	<div class="item-caption">
 		<h3 class="item-header">
 			<a class="item-header-link" href="{{ item.site }}" title="{{ item.title }} — {{ item.tagline }}">
-				{{ item.title }} <span class="item-price">{{ item.price }}</span>
+				{{ item.title }}<span class="item-price">{{ item.price }}</span>
 			</a>
 		</h3>
 		<div class="item-tagline">{{ item.tagline }}</div>

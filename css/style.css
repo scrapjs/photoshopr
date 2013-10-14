@@ -32,49 +32,126 @@ hr{
 	margin: 0;
 }
 
-
-
 /* -------------- Logo & title*/
-	.site-name{
+	.site-name {
 		display: block;
 		line-height: 40px;
 		position: relative;
-		color: rgb(0, 0, 0);
-		margin: 30px 40px 20px 27px;
+		color: white;
+		padding: 40px 40px 40px 40px;
 		text-decoration: none;
 		font-size: 52px;
 		letter-spacing: -1px;
 		font-weight: bolder;
-		text-shadow: 0 2px white;
+		text-shadow: 0 2px black;
+		background: #343434;
 	}
-	.site-tagline{
+	.site-name:hover {
+		color: white;
+		text-decoration: underline;
+	}
+	.site-tagline {
 		display: block;
 		font-size: 20px;
 		line-height: 30px;
 		letter-spacing: 0;
 		margin-left: 2px;
 		margin-top: 6px;
+		font-weight: normal;
 	}
 
 
 /* -------------------- Nav */
 	.aside-nav{
 		float: left;
-		width: 120px;
-		padding: 0px 0 20px 30px;
+		width: 160px;
+		padding: 20px 0 0px 40px;
 	}
 	.aside-nav-link{
 		display: block;
 		line-height: 40px;
 		text-decoration: none;
 		color: black;
+		font-size: 16px;
+		font-weight: normal;
+	}
+	.aside-nav-link:hover{
+		text-decoration: underline;
+	}
+
+
+/* ------------------------items grid */
+	.page-content{
+		padding-top: 20px;
+		margin-left: 40px;
+	}
+	.item-box{
+		padding: 0 20px 0 0;
+		float: left;
+	}
+	@media (min-width: 480px) and (max-width: 699px), (min-width: 768px) and (max-width: 1023px), (min-width: 1109px) and (max-width: 1329px){
+		.page-content{
+			margin-left: 60px;
+		}
+		.site-name{
+			padding-left: 60px;
+		}
+		.aside-nav{
+			float: none;
+			width: auto;
+			margin-left: 20px;
+		}
+		.aside-nav-link{
+			display: inline-block;
+			margin-right: 40px;
+		}
+		.item-box{
+			padding-right: 40px;
+		}
+	}
+	@media (min-width: 0px) and (max-width: 479px), (min-width: 700px) and (max-width: 767px), (min-width: 1024px) and (max-width: 1108px), (min-width: 1330px){
+		.aside-nav{
+			float: none;
+			width: auto;
+			padding-left: 40px;
+		}
+		.site-name{
+			padding-left: 40px;
+		}
+		.page-content{
+			margin-left: 40px;
+		}
+		.aside-nav-link{
+			display: inline-block;
+			margin-right: 40px;
+		}
+		.item-box{
+			padding-right: 20px;
+		}
+	}
+
+	@media (min-width: 1600px){
+		.page-content{
+			margin-left: 60px;
+		}
+		.site-name{
+			padding-left: 60px;
+		}
+		.aside-nav{
+			float: none;
+			width: auto;
+			margin-left: 20px;
+		}
+		.aside-nav-link{
+			display: inline-block;
+			margin-right: 40px;
+		}
+		.item-box{
+			padding-right: 40px;
+		}
 	}
 
 /* ---------------------- Items */
-	.item-box{
-		padding: 0 40px 0 0;
-		float: left;
-	}
 	.item{
 		padding: 0px 0 0px;
 		position: relative;
@@ -160,53 +237,40 @@ hr{
 	}
 	.item-price{
 		color: #b4b4b4;
-		margin-left: 5px;
-		padding-bottom: 2px;
+		margin-left: 8px;
+		display: inline-block;
+		font-size: 16px;
+		text-decoration: none;
+	}
+
+
+/* ------------- Icons */
+	i:after{
+		display: inline-block;
+		vertical-align: middle;
+		position: relative;
+		width: 20px;
+	}
+	.icon-grid:after{
+		content: "♡";
+		font-size: 18px;
+	}
+	.icon-layout:after{
+		content: "⊟";
+		font-size: 18px;
+	}
+	.icon-elements:after{
+		content: "∶∶";
 		font-size: 16px;
 	}
-
-
-/* items grid */
-	.page-content{
-		padding-top: 0px;
-		margin-left: 160px;
+	.icon-icons:after{
+		content: "☄";
+		font-size: 18px;
 	}
-	@media (max-width: 480px){
-		.page-content{
-			margin-left: 0;
-		}
-		.aside-nav{
-			float: none;
-			width: auto;
-		}
+	.icon-CSS:after{
+		content: "\{ \}";
+		white-space: nowrap;
+		font-size: 13px;
+		font-weight: bolder;
+		top: -2px;
 	}
-/* ------------- Icons */
-i:after{
-	display: inline-block;
-	vertical-align: middle;
-	position: relative;
-	width: 20px;
-}
-.icon-grid:after{
-	content: "♡";
-	font-size: 18px;
-}
-.icon-layout:after{
-	content: "⊟";
-	font-size: 18px;
-}
-.icon-elements:after{
-	content: "∶∶";
-	font-size: 16px;
-}
-.icon-icons:after{
-	content: "☄";
-	font-size: 18px;
-}
-.icon-CSS:after{
-	content: "\{ \}";
-	white-space: nowrap;
-	font-size: 13px;
-	font-weight: bolder;
-	top: -2px;
-}

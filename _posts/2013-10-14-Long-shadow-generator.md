@@ -1,9 +1,9 @@
 ---
-title: "Caption"
-logo:
-tagline: "Undercaption"
-categories: [main, secondary, tertiary]
-tags: [Alternative, categories]
+title: "Long shadow generator"
+logo: "long-shadow-generator-logo.png"
+tagline: "Long shadows as layer-style"
+categories: [effects]
+tags: [effects]
 site: //www.link.to
 pros:
     -
@@ -16,7 +16,7 @@ author:
     twitter:
 free: true
 price: "free"
-version: ["CS4", "CS5", "CS6", "CC"]
+version: ["CS6", "CC"]
 platform: ["Windows", "OSX"]
 type: "extension"
 
@@ -25,9 +25,9 @@ robots: index, follow
 published: true
 ad: false
 
-background: "#4CBBFA"
+background: "#16A085"
 videos:
-images:
+images: [long-shadow-demo.png]
 ---
 
 Visible only in extended version of view
