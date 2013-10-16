@@ -8,6 +8,16 @@ body{
 	background: #f1f1f1;
 	line-height: 20px;
 	font-size: 16px;
+	padding-left: 40px;
+	background: #f1f1f1; /* Old browsers */
+	background: -moz-radial-gradient(center, ellipse cover,  hsla(0,0%,95%,1) 53%, hsla(205,12%,77%,1) 100%); /* FF3.6+ */
+	background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(53%,hsla(0,0%,95%,1)), color-stop(100%,hsla(205,12%,77%,1))); /* Chrome,Safari4+ */
+	background: -webkit-radial-gradient(center, ellipse cover,  hsla(0,0%,95%,1) 53%,hsla(205,12%,77%,1) 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-radial-gradient(center, ellipse cover,  hsla(0,0%,95%,1) 53%,hsla(205,12%,77%,1) 100%); /* Opera 12+ */
+	background: -ms-radial-gradient(center, ellipse cover,  hsla(0,0%,95%,1) 53%,hsla(205,12%,77%,1) 100%); /* IE10+ */
+	background: radial-gradient(ellipse at center,  hsla(0,0%,95%,1) 53%,hsla(205,12%,77%,1) 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#e6edf2',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
+	background-size: 100% 100%;
 }
 
 a{
@@ -32,64 +42,91 @@ hr{
 	margin: 0;
 }
 
+/* ---------------- lyt */
+.centered{
+	width: 960px;
+	margin: 0 auto;
+}
+.item-box{
+	padding: 0 20px 0 0;
+	float: left;
+}
+
+@media (max-width: 768px){
+	.centered{
+		width: 90%;
+	}
+	.item-box{
+		float: none;
+		padding: 0;
+		margin: 0 auto;
+		width: 300px;
+	}
+}
+
+@media (min-width: 769px) and (max-width: 1024px){
+	.centered{
+		width: 640px;
+	}
+}
+
 /* -------------- Logo & title*/
 	.site-name {
 		display: block;
-		line-height: 40px;
 		position: relative;
-		color: white;
-		padding: 40px 40px 40px 40px;
+		line-height: 1;
+		padding: 40px 0;
 		text-decoration: none;
-		font-size: 52px;
+		font-size: 4rem;
 		letter-spacing: -1px;
 		font-weight: bolder;
-		text-shadow: 0 2px black;
-		background: #343434;
+		text-shadow: 0 2px white;
+		text-align: center;
+		color: black;
 	}
 	.site-name:hover {
-		color: white;
-		text-decoration: underline;
 	}
 	.site-tagline {
 		display: block;
-		font-size: 20px;
-		line-height: 30px;
+		font-size: 1.5rem;
+		line-height: 1;
 		letter-spacing: 0;
 		margin-left: 2px;
 		margin-top: 6px;
-		font-weight: normal;
+		font-weight: bold;
 	}
 
 
 /* -------------------- Nav */
 	.aside-nav{
-		float: left;
-		width: 160px;
-		padding: 20px 0 0px 40px;
+		position: fixed;
+		top: 0;
+		bottom: 0;
+		left: 0;
+		margin: auto 0;
+		background: black;
 	}
 	.aside-nav-link{
 		display: block;
 		line-height: 40px;
 		text-decoration: none;
-		color: black;
+		color: white;
 		font-size: 16px;
 		font-weight: normal;
+		width: 40px;
+		text-align: center;
 	}
 	.aside-nav-link:hover{
-		text-decoration: underline;
+		color: white;
+		background: #333;
 	}
 
 
 /* ------------------------items grid */
 	.page-content{
 		padding-top: 20px;
-		margin-left: 40px;
 	}
-	.item-box{
-		padding: 0 20px 0 0;
-		float: left;
-	}
-	@media (min-width: 480px) and (max-width: 699px), (min-width: 768px) and (max-width: 1023px), (min-width: 1109px) and (max-width: 1329px){
+	/*@media (min-width: 480px) and (max-width: 699px), (min-width: 768px) and (max-width: 1023px), (min-width: 1109px) and (max-width: 1329px){
 		.page-content{
 			margin-left: 60px;
 		}
@@ -149,7 +186,7 @@ hr{
 		.item-box{
 			padding-right: 40px;
 		}
-	}
+	}*/
 
 /* ---------------------- Items */
 	.item{
@@ -163,7 +200,7 @@ hr{
 		display: block;
 		margin: 0 0 0;
 		height: 220px;
-		border-radius: 16px;
+		border-radius: 12px;
 		position: relative;
 		text-align: center;
 		overflow: hidden;
@@ -202,9 +239,8 @@ hr{
 	}
 
 	.item-caption{
-		width: 300px;
-		margin: 12px 2px 0;
-		padding: 0 20px 0 0px;
+		margin: 12px 12px 0;
+		padding: 0 0px 0 0px;
 	}
 
 	.item-header{
@@ -237,10 +273,10 @@ hr{
 	}
 	.item-price{
 		color: #b4b4b4;
-		margin-left: 8px;
 		display: inline-block;
 		font-size: 16px;
 		text-decoration: none;
+		float: right;
 	}
 
 
@@ -267,10 +303,15 @@ hr{
 		content: "☄";
 		font-size: 18px;
 	}
-	.icon-CSS:after{
+	.icon-processing:after{
 		content: "\{ \}";
 		white-space: nowrap;
 		font-size: 13px;
 		font-weight: bolder;
 		top: -2px;
+	}
+	.icon-effects:after{
+		content: "fx";
+		font-family: serif;
+		font-style: italic;
 	}

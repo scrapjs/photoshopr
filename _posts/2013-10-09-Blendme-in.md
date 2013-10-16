@@ -2,7 +2,7 @@
 name: "Blendme.in"
 logo: "blendme-in-logo.png"
 tagline: "Icon collections"
-categories: [icons]
+categories: [elements]
 tags: [icons, collections, elements]
 site: http://blendme.in/
 features: 

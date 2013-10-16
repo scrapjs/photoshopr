@@ -4,7 +4,7 @@ logo: "long-shadow-generator-logo.png"
 tagline: "Long shadows as layer-style"
 categories: [effects]
 tags: [effects]
-site: //www.link.to
+site: http://lab.rayps.com/lsg/
 pros:
     -
 cons:
@@ -12,7 +12,7 @@ cons:
 features: 
 author:
     name: He
-    url: //
+    url: http://rayps.com/
     twitter:
 free: true
 price: "free"

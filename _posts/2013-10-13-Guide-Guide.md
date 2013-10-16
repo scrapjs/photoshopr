@@ -2,7 +2,7 @@
 title: "GuideGuide"
 logo: "guide-guide-logo.png"
 tagline: "Pixel accurate columns, rows, midpoints, and baselines with the click of a button."
-categories: [grid]
+categories: [layout]
 tags: [layout, alignment]
 site: http://guideguide.me/
 pros:
