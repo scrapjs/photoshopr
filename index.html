@@ -2,19 +2,10 @@
 layout: base
 ---
 
-<a href="/" class="site-name centered" title="{{ site.description }}">
-	{{ site.name }}
-	<span class="site-tagline">{{ site.description }}</span>
-</a>
+{% assign list = site.posts %}
+{% assign title = site.name %}
+{% assign tagline = site.description %}
 
-<nav class="aside-nav">
-	{% for category in site.categories %}
-	<a href="/section/{{ category[0] }}" class="aside-nav-link" title="{{ category[0] }}"><i class="icon-{{ category[0] }}"></i></a>
-	{% endfor %}
-</nav>
-
-<section class="page-content centered">
-	{% for item in site.posts %}
-		{% include item.tpl %}
-	{% endfor %}
-</section>
+{% include header.tpl %}
+{% include nav.tpl %}
+{% include list.tpl %}

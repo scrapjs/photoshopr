@@ -15,7 +15,7 @@ author:
     url: http://cameronmcefee.com/
     twitter: https://twitter.com/cameronmcefee
     github: https://github.com/cameronmcefee
-free: true
+isFree: true
 price: "free"
 version: ["CS4", "CS5", "CS6", "CC"]
 platform: ["Windows", "OSX"]

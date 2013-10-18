@@ -14,7 +14,7 @@ author:
     name: He
     url: http://rayps.com/
     twitter:
-free: true
+isFree: true
 price: "free"
 version: ["CS6", "CC"]
 platform: ["Windows", "OSX"]

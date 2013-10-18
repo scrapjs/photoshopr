@@ -14,7 +14,7 @@ author:
     name: He
     url: //
     twitter:
-free: false
+isFree: false
 price: "$11.99"
 version: ["CS4", "CS5", "CS6", "CC"]
 platform: ["Windows", "OSX"]

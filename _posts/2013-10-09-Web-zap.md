@@ -14,7 +14,7 @@ author:
     name: He
     url: //
     twitter:
-free: true
+isFree: true
 price: "free"
 version: ["CS4", "CS5", "CS6", "CC"]
 platform: ["Windows", "OSX"]

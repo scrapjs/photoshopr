@@ -10,7 +10,7 @@ author:
     name: He
     url: //
     twitter:
-free: true
+isFree: true
 version: ["CS4", "CS5", "CS6", "CC"]
 platform: ["Windows", "OSX"]
 

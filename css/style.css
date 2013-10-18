@@ -42,13 +42,27 @@ hr{
 	margin: 0;
 }
 
+.light{
+	color: #cfcfcf;
+}
+
+.link-extender{
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 1;
+}
+
 /* ---------------- lyt */
 .centered{
-	width: 960px;
+	width: 990px;
 	margin: 0 auto;
+	padding-left: 30px;
 }
 .item-box{
-	padding: 0 20px 0 0;
+	padding: 0 30px 0 0;
 	float: left;
 }
 
@@ -60,14 +74,22 @@ hr{
 		float: none;
 		padding: 0;
 		margin: 0 auto;
-		width: 300px;
 	}
 }
 
 @media (min-width: 769px) and (max-width: 1024px){
 	.centered{
-		width: 640px;
+		width: 670px;
 	}
+}
+.page-content{
+	padding-top: 20px;
+}
+.item{
+	padding: 0px 0 0px;
+	position: relative;
+	height: 320px;
+	width: 290px;
 }
 
 /* -------------- Logo & title*/
@@ -75,13 +97,14 @@ hr{
 		display: block;
 		position: relative;
 		line-height: 1;
-		padding: 40px 0;
+		padding-top: 40px;
+		padding-bottom: 40px;
 		text-decoration: none;
 		font-size: 4rem;
 		letter-spacing: -1px;
 		font-weight: bolder;
 		text-shadow: 0 2px white;
-		text-align: center;
+		text-align: left;
 		color: black;
 	}
 	.site-name:hover {
@@ -95,6 +118,9 @@ hr{
 		margin-top: 6px;
 		font-weight: bold;
 	}
+	.site-name > a{
+		color: black;
+	}
 
 
 /* -------------------- Nav */
@@ -107,6 +133,7 @@ hr{
 		background: black;
 	}
 	.aside-nav-link{
+		position: relative;
 		display: block;
 		line-height: 40px;
 		text-decoration: none;
@@ -120,82 +147,12 @@ hr{
 		color: white;
 		background: #333;
 	}
-
-
-/* ------------------------items grid */
-	.page-content{
-		padding-top: 20px;
-	}
-	/*@media (min-width: 480px) and (max-width: 699px), (min-width: 768px) and (max-width: 1023px), (min-width: 1109px) and (max-width: 1329px){
-		.page-content{
-			margin-left: 60px;
-		}
-		.site-name{
-			padding-left: 60px;
-		}
-		.aside-nav{
-			float: none;
-			width: auto;
-			margin-left: 20px;
-		}
-		.aside-nav-link{
-			display: inline-block;
-			margin-right: 40px;
-		}
-		.item-box{
-			padding-right: 40px;
-		}
-	}
-	@media (min-width: 0px) and (max-width: 479px), (min-width: 700px) and (max-width: 767px), (min-width: 1024px) and (max-width: 1108px), (min-width: 1330px){
-		.aside-nav{
-			float: none;
-			width: auto;
-			padding-left: 40px;
-		}
-		.site-name{
-			padding-left: 40px;
-		}
-		.page-content{
-			margin-left: 40px;
-		}
-		.aside-nav-link{
-			display: inline-block;
-			margin-right: 40px;
-		}
-		.item-box{
-			padding-right: 20px;
-		}
+	.aside-nav-link.active{
+		background: #666;
 	}
 
-	@media (min-width: 1600px){
-		.page-content{
-			margin-left: 60px;
-		}
-		.site-name{
-			padding-left: 60px;
-		}
-		.aside-nav{
-			float: none;
-			width: auto;
-			margin-left: 20px;
-		}
-		.aside-nav-link{
-			display: inline-block;
-			margin-right: 40px;
-		}
-		.item-box{
-			padding-right: 40px;
-		}
-	}*/
 
-/* ---------------------- Items */
-	.item{
-		padding: 0px 0 0px;
-		position: relative;
-		height: 320px;
-		width: 300px;
-	}
-
+/* ---------------------- Item elements */
 	.item-preview{
 		display: block;
 		margin: 0 0 0;
@@ -227,6 +184,8 @@ hr{
 		padding: 0;
 		opacity: 0;
 		transition: .1s linear opacity;
+		overflow: hidden;
+		border-radius: 12px;
 	}
 	.item-preview:hover .item-preview-slides{
 		opacity: 1;
@@ -239,7 +198,7 @@ hr{
 	}
 
 	.item-caption{
-		margin: 12px 12px 0;
+		margin: 12px 2px 0;
 		padding: 0 0px 0 0px;
 	}
 
@@ -262,21 +221,24 @@ hr{
 	.item-categories{
 		display: block;
 		position: absolute;
-		top: 190px;
-		right: 10px;
+		top: 6px;
+		right: 6px;
 		padding: 0 0px;
 	}
 	.item-category{
-		color: #d3d3d3;
+		color: #232323;
 		text-decoration: none;
 		font-weight: bolder;
 	}
 	.item-price{
-		color: #b4b4b4;
+		color: rgb(176, 204, 176);
 		display: inline-block;
 		font-size: 16px;
 		text-decoration: none;
 		float: right;
+	}
+	.item-price.free{
+		color: rgb(245, 73, 73);
 	}
 
 

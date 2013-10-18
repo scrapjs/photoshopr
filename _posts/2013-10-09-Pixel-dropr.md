@@ -15,7 +15,7 @@ author:
     name: UI-parade
     url: http://uiparade.com
     logo: /img/ui-parade.png
-free: false
+isFree: false
 price: from $19
 version: ["CS4", "CS5", "CS6", "CC"]
 platform: ["Windows", "OSX"]
