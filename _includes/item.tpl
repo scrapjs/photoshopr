@@ -1,7 +1,7 @@
 <div class="item-box">
 <article class="item" id="{{ item.slug }}">
 	<div class="item-preview" style="background:{{ item.background }}">
-		<a href="/" rel="{{ item.site }}" class="link-extender"></a>
+		<a href="{{ item.url }}" rel="{{ item.site }}" class="link-extender"></a>
 		{% if item.images %}
 			<div class="item-preview-slides">
 				{% for image in item.images %}
@@ -13,12 +13,11 @@
 		<img class="item-preview-logo" src="/img/{{ item.logo }}"/>
 	</div>
 
-
-		<nav class="item-categories">
-			{% for cat in item.categories %}
-				<a href="/section/{{ cat }}" title="{{ cat }}" class="item-category"><i class="icon-{{cat}}"></i></a>
-			{% endfor %}
-		</nav>
+	<nav class="item-categories">
+		{% for cat in item.categories %}
+			<a href="/section/{{ cat }}" title="{{ cat }}" class="item-category"><i class="icon-{{cat}}"></i></a>
+		{% endfor %}
+	</nav>
 
 	<div class="item-caption">
 		<h3 class="item-header">

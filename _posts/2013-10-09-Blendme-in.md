@@ -19,6 +19,7 @@ robots: index, follow
 published: true
 ad: false
 
+layout: single
 background: "#A2AB4B"
 images: [blendme-in-1.jpg, blendme-in-2.jpg]
 video: 

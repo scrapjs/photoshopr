@@ -25,6 +25,7 @@ robots: index, follow
 published: true
 ad: false
 
+layout: single
 background: "#16A085"
 videos:
 images: [long-shadow-demo.png]

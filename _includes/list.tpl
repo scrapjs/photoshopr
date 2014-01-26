@@ -1,4 +1,4 @@
-<section class="page-content centered">
+<section id="page-content" class="centered">
 	{% for item in list %}
 		{% include item.tpl %}
 	{% endfor %}

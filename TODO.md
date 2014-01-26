@@ -16,6 +16,7 @@
 * Make filter of free
 * Fill up with immense amount of plugins (merge contents of competitors)
 * Show number of items in a category
+* Related items on the static page
 
 ---
 
@@ -24,3 +25,4 @@
 * Companies that uses plugin
 * Make developer pack: download at once
 * Make mac animations
+* Hit of the week - featured plugins

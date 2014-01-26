@@ -24,6 +24,7 @@ robots: index, follow
 published: true
 ad: false
 
+layout: single
 background: "#333"
 video:
 images: ["guide-guide-demo.gif"]

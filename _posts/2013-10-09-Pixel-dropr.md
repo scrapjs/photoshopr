@@ -24,6 +24,7 @@ sharing: true
 robots: index, follow
 published: true
 
+layout: single
 background: "#4CBBFA"
 video: 
 ---
