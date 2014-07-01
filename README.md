@@ -1,5 +1,7 @@
 # Photoshop extension that converts layer properties to CSS
 
+The script is still in development.
+
 Besides, makes a plenty of other goods, as listed below.
 
 But for now it is far from use. Currently developing graphics library – the basis for this plugin.
